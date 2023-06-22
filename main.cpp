@@ -6,6 +6,7 @@
 
 #include "package_header.h"
 #include "package_entry.h"
+#include "package_block.h"
 
 const char* package_folder_path = "C:\\Program Files (x86)\\Epic Games\\Destiny2\\packages\\";
 
@@ -19,11 +20,16 @@ int main()
 
 	{
 		FILE* package = fopen(package_path.c_str(), "rb");
+		if (!package)
+		{
+			std::cerr << "Invalid filepath: " << package_path << std::endl;
+			return 1;
+		}
 
 		PackageHeader package_header(package);
-		PackageEntry package_entry(package, package_header);
 
-		std::cout << package_header;
+		PackageEntry package_entry(package, package_header);
+		PackageBlock package_block(package, package_header);
 
 		fclose(package);
 	}

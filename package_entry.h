@@ -10,13 +10,13 @@ struct Entry
 	unsigned C;
 	unsigned D;
 
-	unsigned GetRefID() const;
-	unsigned GetPackageRefID() const;
-	unsigned GetStartingBlock() const;
-	unsigned GetStartingBlockOffset() const;
+	unsigned short GetRefID() const;
+	unsigned short GetPackageRefID() const;
+	unsigned short GetStartingBlock() const;
+	unsigned short GetStartingBlockOffset() const;
 	unsigned GetFileSize() const;
-	unsigned GetType() const;
-	unsigned GetSubType() const;
+	unsigned short GetType() const;
+	unsigned short GetSubType() const;
 
 	friend std::ostream& operator<<(std::ostream&, const Entry&);
 };
@@ -26,5 +26,8 @@ class PackageEntry
 public:
 	PackageEntry(FILE*, const PackageHeader&);
 
+	std::vector<Entry>& Get();
+	Entry& operator[](int index);
+private:
 	std::vector<Entry> entry_table;
 };

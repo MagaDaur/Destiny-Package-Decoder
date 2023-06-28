@@ -128,11 +128,13 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="OodleDecompress.cpp" />
     <ClCompile Include="package_block.cpp" />
     <ClCompile Include="package_entry.cpp" />
     <ClCompile Include="package_header.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="OodleDecompress.h" />
     <ClInclude Include="package_block.h" />
     <ClInclude Include="package_entry.h" />
     <ClInclude Include="package_header.h" />

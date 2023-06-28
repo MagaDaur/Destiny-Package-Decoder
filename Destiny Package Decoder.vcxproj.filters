@@ -27,6 +27,9 @@
     <ClCompile Include="package_block.cpp">
       <Filter>Resource Files</Filter>
     </ClCompile>
+    <ClCompile Include="OodleDecompress.cpp">
+      <Filter>Resource Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="package_header.h">
@@ -36,6 +39,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="package_block.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="OodleDecompress.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

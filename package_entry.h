@@ -13,7 +13,7 @@ struct Entry
 	unsigned short GetRefID() const;
 	unsigned short GetPackageRefID() const;
 	unsigned short GetStartingBlock() const;
-	unsigned short GetStartingBlockOffset() const;
+	unsigned GetStartingBlockOffset() const;
 	unsigned GetFileSize() const;
 	unsigned short GetType() const;
 	unsigned short GetSubType() const;

@@ -7,8 +7,11 @@
 #include "package_header.h"
 #include "package_entry.h"
 #include "package_block.h"
+#include "OodleDecompress.h"
 
 const char* package_folder_path = "C:\\Program Files (x86)\\Epic Games\\Destiny2\\packages\\";
+
+Oodle g_Oodle;
 
 int main()
 {
@@ -22,7 +25,7 @@ int main()
 		FILE* package = fopen(package_path.c_str(), "rb");
 		if (!package)
 		{
-			std::cerr << "Invalid filepath: " << package_path << std::endl;
+			std::cerr << "Invalid package path: " << package_path << std::endl;
 			return 1;
 		}
 
@@ -30,6 +33,14 @@ int main()
 
 		PackageEntry package_entry(package, package_header);
 		PackageBlock package_block(package, package_header);
+
+		auto& entry_table = package_entry.Get();
+
+		for (int i = entry_table.size() - 1; i >= int(entry_table.size()) - 100 && i >= 0; i--)
+		{
+			auto& entry = entry_table[i];
+			package_block.ExtractEntryToFile(package_path, entry, std::to_string(entry.GetType()) + "_" + std::to_string(entry.GetSubType()) + "_" + std::to_string(i));
+		}
 
 		fclose(package);
 	}

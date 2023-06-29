@@ -110,14 +110,9 @@ bool PackageBlock::ExtractEntryToFile(const std::string& package_path, const Ent
 	unsigned char* out_buffer = new (unsigned char[file_size]);
 	memset(out_buffer, 0, file_size);
 
-	if (entry.GetType() == 27 && entry.GetSubType() == 1)
-		std::cout << entry << std::endl;
-
 	while (buffer_offset < file_size)
 	{
 		const Block& block = block_table[current_block_id];
-		if (entry.GetType() == 27 && entry.GetSubType() == 1 && block.patch_id)
-			std::cout << block << std::endl;
 
 		FILE* patch_file = block.GetPatchFile(package_path);
 
@@ -161,60 +156,79 @@ bool PackageBlock::ExtractEntryToFile(const std::string& package_path, const Ent
 		delete[] decomp_buffer;
 	}
 
+	const size_t package_name_begin = package_path.find_last_of('\\') + 1;
+	const size_t package_name_end = package_path.find_last_of('.');
+	const std::string package_output_directory_path = "output/" + package_path.substr(package_name_begin, package_name_end - package_name_begin) + "/";
+
+	CreateDirectoryA(package_output_directory_path.c_str(), NULL);
+
 	if (entry.GetType() == 26 && entry.GetSubType() == 7)
 	{
-		std::string temp_wem_filepath = "output/temp_wem/" + output_filename + ".wem";
-		FILE* temp_wem_file = fopen(temp_wem_filepath.c_str(), "wb");
+		const std::string wav_directory_path = package_output_directory_path + "wav/";
+		const std::string temp_wem_file_path = wav_directory_path + output_filename + ".wem";
+		CreateDirectoryA(wav_directory_path.c_str(), NULL);
+
+		
+		FILE* temp_wem_file = fopen(temp_wem_file_path.c_str(), "wb");
 		fwrite(out_buffer, file_size, 1, temp_wem_file);
 		fclose(temp_wem_file);
 
-		std::string output_filepath = "output/wav/" + output_filename + ".wav";
-		std::string vgmstream_command = "vgmstream\\vgmstream-cli.exe " + temp_wem_filepath + " -o " + output_filepath;
+		std::string output_filepath = wav_directory_path + output_filename + ".wav";
+		std::string vgmstream_command = "vgmstream\\vgmstream-cli.exe " + temp_wem_file_path + " -o " + output_filepath;
 		system(vgmstream_command.c_str());
 
-		DeleteFileA(temp_wem_filepath.c_str());
-
-		std::cout << "Saved WAV audio file to: " << output_filepath << std::endl;
+		DeleteFileA(temp_wem_file_path.c_str());
 	}
-	//else if (entry.GetType() == 26 && entry.GetSubType() == 6)
-	//{
-	//	std::string temp_bnk_filepath = "output/bnk_unpack/Game Files/" + output_filename + ".bnk";
-	//	FILE* temp_bnk_file = fopen(temp_bnk_filepath.c_str(), "wb");
-	//	fwrite(out_buffer, file_size, 1, temp_bnk_file);
-	//	fclose(temp_bnk_file);
-
-	//	std::string wwiser_command = "output\\bnk_unpack\\Unpack to MP3.bat";
-	//	//system(wwiser_command.c_str());
-	//}
 	else if (entry.GetType() == 27 && entry.GetSubType() == 1)
 	{
-		std::string usm_filepath = "output/usm/" + output_filename + ".usm";
-		FILE* usm_file = fopen(usm_filepath.c_str(), "wb");
+		const std::string usm_directory_path = package_output_directory_path + "usm/";
+		const std::string usm_file_path = usm_directory_path + output_filename + ".usm";
+		CreateDirectoryA(usm_directory_path.c_str(), NULL);
+
+		FILE* usm_file = fopen(usm_file_path.c_str(), "wb");
 		fwrite(out_buffer, file_size, 1, usm_file);
 		fclose(usm_file);
 
-		std::cout << "Saved USM movie to: " << usm_filepath << std::endl;
+		std::cout << "Saved USM movie to: " << usm_file_path << std::endl;
+	}
+	else if (entry.GetType() == 27 && entry.GetSubType() == 0)
+	{
+		const std::string hkx_directory_path = package_output_directory_path + "hkx/";
+		const std::string hkx_file_path = hkx_directory_path + output_filename + ".hkx";
+		CreateDirectoryA(hkx_directory_path.c_str(), NULL);
+
+		FILE* hkx_file = fopen(hkx_file_path.c_str(), "wb");
+		fwrite(out_buffer, file_size, 1, hkx_file);
+		fclose(hkx_file);
+
+		std::cout << "Saved HKX file to: " << hkx_file_path << std::endl;
 	}
 	else if (entry.GetType() == 41 && (entry.GetSubType() == 6 || entry.GetSubType() == 2 || entry.GetSubType() == 1 || entry.GetSubType() == 0))
 	{
-		std::string hlsl_filepath = "output/hlsl/" + output_filename + ".bin";
-		FILE* hlsl_file = fopen(hlsl_filepath.c_str(), "wb");
-		fwrite(out_buffer, file_size, 1, hlsl_file);
-		fclose(hlsl_file);
+		CreateDirectoryA((package_output_directory_path + "shader/").c_str(), NULL);
+		const std::string shader_directory_path = package_output_directory_path + "shader/" + std::to_string(entry.GetSubType()) + "/";
+		const std::string shader_file_path = shader_directory_path + output_filename + ".bin";
+		CreateDirectoryA(shader_directory_path.c_str(), NULL);
 
-		std::cout << "Saved HLSL file to: " << hlsl_filepath << std::endl;
+		FILE* shader_file = fopen(shader_file_path.c_str(), "wb");
+		fwrite(out_buffer, file_size, 1, shader_file);
+		fclose(shader_file);
+
+		const std::string midoto_shader_command = "shader_decompiler\\decompiler.exe -D " + shader_file_path;
+		system(midoto_shader_command.c_str());
+
+		DeleteFileA(shader_file_path.c_str());
 	}
-	//else
-	//{
-	//	std::string unknown_file_path = "output/unknown/" + output_filename + ".bin";
-	//	FILE* temp_unknown_file = fopen(unknown_file_path.c_str(), "wb");
+	else
+	{
+		const std::string unknown_direcroty_path = package_output_directory_path + "unknown/";
+		const std::string unknown_file_path = unknown_direcroty_path + output_filename + ".bin";
+		CreateDirectoryA(unknown_direcroty_path.c_str(), NULL);
 
-	//	fwrite(out_buffer, file_size, 1, temp_unknown_file);
-
-	//	fclose(temp_unknown_file);
-
-	//	std::cout << "Saved unknown file type to: " << unknown_file_path << std::endl;
-	//}
+		FILE* unknown_file = fopen(unknown_file_path.c_str(), "wb");
+		fwrite(out_buffer, file_size, 1, unknown_file);
+		fclose(unknown_file);
+	}
 
 	delete[] out_buffer;
 

@@ -36,7 +36,7 @@ int main()
 
 		auto& entry_table = package_entry.Get();
 
-		for (int i = entry_table.size() - 1; i >= int(entry_table.size()) - 100 && i >= 0; i--)
+		for (int i = entry_table.size() - 1; i >= 0; i--)
 		{
 			auto& entry = entry_table[i];
 			package_block.ExtractEntryToFile(package_path, entry, std::to_string(entry.GetType()) + "_" + std::to_string(entry.GetSubType()) + "_" + std::to_string(i));

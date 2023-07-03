@@ -9,6 +9,7 @@
 #include "OodleDecompress.h"
 #include <cmath>
 #include <Windows.h>
+#include "helpers.h"
 
 const unsigned char AES_KEY_0[16] =
 {
@@ -218,6 +219,16 @@ bool PackageBlock::ExtractEntryToFile(const std::string& package_path, const Ent
 		system(midoto_shader_command.c_str());
 
 		DeleteFileA(shader_file_path.c_str());
+	}
+	else if ((entry.GetType() == 8 || entry.GetType() == 16) && entry.GetSubType() == 0)
+	{
+		const std::string unknown_direcroty_path = package_output_directory_path + "unknown/";
+		const std::string unknown_file_path = unknown_direcroty_path + helpers::to_hex(entry.A) + "_" + output_filename + ".bin";
+		CreateDirectoryA(unknown_direcroty_path.c_str(), NULL);
+
+		FILE* unknown_file = fopen(unknown_file_path.c_str(), "wb");
+		fwrite(out_buffer, file_size, 1, unknown_file);
+		fclose(unknown_file);
 	}
 	else
 	{

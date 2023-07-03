@@ -134,6 +134,7 @@
     <ClCompile Include="package_header.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="helpers.h" />
     <ClInclude Include="OodleDecompress.h" />
     <ClInclude Include="package_block.h" />
     <ClInclude Include="package_entry.h" />

@@ -8,12 +8,12 @@ class PackageHeader
 {
 public:
 	friend class PackageEntry;
-	friend class PackageBlock;
+	friend class Package;
 
 	PackageHeader(FILE* package);
 
 	friend std::ostream& operator<<(std::ostream&, const PackageHeader&);
-private:
+protected:
 	unsigned char raw_data[package_header_size];
 
 	unsigned short package_id;

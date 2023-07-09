@@ -33,8 +33,7 @@ std::ostream& operator<<(std::ostream& out, const Block& block)
 
 bool Block::Decomp(unsigned char* decrypt_buffer, unsigned char* decomp_buffer) const
 {
-	if (g_Oodle.Decompress(this, decrypt_buffer, decomp_buffer) <= 0) return false;
-	return true;
+	return g_pOodle->Decompress(this, decrypt_buffer, decomp_buffer);
 }
 
 bool Block::Decrypt(unsigned char* block_buffer, unsigned char* decrypt_buffer, unsigned char* nonce) const
@@ -49,7 +48,7 @@ bool Block::Decrypt(unsigned char* block_buffer, unsigned char* decrypt_buffer, 
 	if (status < 0)
 		return false;
 
-	alignas(alignof(BCRYPT_KEY_DATA_BLOB_HEADER)) unsigned char keyData[sizeof(BCRYPT_KEY_DATA_BLOB_HEADER) + 16];
+	alignas(alignof(BCRYPT_KEY_DATA_BLOB_HEADER)) unsigned char keyData[sizeof(BCRYPT_KEY_DATA_BLOB_HEADER) + 16] = { 0 };
 	BCRYPT_KEY_DATA_BLOB_HEADER* pHeader = (BCRYPT_KEY_DATA_BLOB_HEADER*)keyData;
 	pHeader->dwMagic = BCRYPT_KEY_DATA_BLOB_MAGIC;
 	pHeader->dwVersion = BCRYPT_KEY_DATA_BLOB_VERSION1;
@@ -86,172 +85,7 @@ FILE* Block::GetPatchFile(std::string package_path) const
 {
 	package_path.replace(package_path.end() - 5, package_path.end() - 4, std::to_string(patch_id));
 	FILE* ret = fopen(package_path.c_str(), "rb");
-	fseek(ret, offset, SEEK_SET);
+	if(ret) fseek(ret, offset, SEEK_SET);
 	return ret;
 }
 
-PackageBlock::PackageBlock(FILE* package, const PackageHeader& header)
-{
-	nonce[0] ^= (header.package_id >> 8) & 0xFF;
-	nonce[11] ^= header.package_id & 0xFF;
-
-	block_table.resize(header.block_table_size);
-	
-	fseek(package, header.block_table_offset, SEEK_SET);
-	for (unsigned i = 0; i < header.block_table_size; i++)
-		fread(&block_table[i], sizeof(Block), 1, package);
-}
-
-bool PackageBlock::ExtractEntryToFile(const std::string& package_path, const Entry& entry, const std::string& output_filename)
-{
-	unsigned current_block_id = entry.GetStartingBlock();
-	unsigned buffer_offset = 0;
-	unsigned file_size = entry.GetFileSize();
-
-	unsigned char* out_buffer = new (unsigned char[file_size]);
-	memset(out_buffer, 0, file_size);
-
-	while (buffer_offset < file_size)
-	{
-		const Block& block = block_table[current_block_id];
-
-		FILE* patch_file = block.GetPatchFile(package_path);
-
-		if (!patch_file)
-		{
-			delete[] out_buffer;
-			return false;
-		}
-
-		unsigned char* block_buffer = new (unsigned char[block.size]);
-		unsigned char* decrypt_buffer = new (unsigned char[block.size]);
-		unsigned char* decomp_buffer = new (unsigned char[Block::MAX_SIZE]);
-
-		fread(block_buffer, 1, block.size, patch_file);
-
-		if (block.flags & 2)
-			block.Decrypt(block_buffer, decrypt_buffer, nonce);
-		else
-			memcpy(decrypt_buffer, block_buffer, block.size);
-
-
-		if (block.flags & 1)
-			block.Decomp(decrypt_buffer, decomp_buffer);
-		else
-			memcpy(decomp_buffer, decrypt_buffer, block.size);
-
-		int offset = 0;
-		if (current_block_id == entry.GetStartingBlock())
-			offset = entry.GetStartingBlockOffset();
-
-		int size = min(Block::MAX_SIZE - offset, file_size - buffer_offset);
-
-		memcpy(out_buffer + buffer_offset, decomp_buffer + offset, size);
-
-		buffer_offset += size;
-		current_block_id++;
-
-		fclose(patch_file);
-		delete[] block_buffer;
-		delete[] decrypt_buffer;
-		delete[] decomp_buffer;
-	}
-
-	const size_t package_name_begin = package_path.find_last_of('\\') + 1;
-	const size_t package_name_end = package_path.find_last_of('.');
-	const std::string package_output_directory_path = "output/" + package_path.substr(package_name_begin, package_name_end - package_name_begin) + "/";
-
-	CreateDirectoryA(package_output_directory_path.c_str(), NULL);
-
-	if (entry.GetType() == 26 && entry.GetSubType() == 7)
-	{
-		const std::string wav_directory_path = package_output_directory_path + "wav/";
-		const std::string temp_wem_file_path = wav_directory_path + output_filename + ".wem";
-		CreateDirectoryA(wav_directory_path.c_str(), NULL);
-
-		
-		FILE* temp_wem_file = fopen(temp_wem_file_path.c_str(), "wb");
-		fwrite(out_buffer, file_size, 1, temp_wem_file);
-		fclose(temp_wem_file);
-
-		std::string output_filepath = wav_directory_path + output_filename + ".wav";
-		std::string vgmstream_command = "vgmstream\\vgmstream-cli.exe " + temp_wem_file_path + " -o " + output_filepath;
-		system(vgmstream_command.c_str());
-
-		DeleteFileA(temp_wem_file_path.c_str());
-	}
-	else if (entry.GetType() == 27 && entry.GetSubType() == 1)
-	{
-		const std::string usm_directory_path = package_output_directory_path + "usm/";
-		const std::string usm_file_path = usm_directory_path + output_filename + ".usm";
-		CreateDirectoryA(usm_directory_path.c_str(), NULL);
-
-		FILE* usm_file = fopen(usm_file_path.c_str(), "wb");
-		fwrite(out_buffer, file_size, 1, usm_file);
-		fclose(usm_file);
-
-		std::cout << "Saved USM movie to: " << usm_file_path << std::endl;
-	}
-	else if (entry.GetType() == 27 && entry.GetSubType() == 0)
-	{
-		const std::string hkx_directory_path = package_output_directory_path + "hkx/";
-		const std::string hkx_file_path = hkx_directory_path + output_filename + ".hkx";
-		CreateDirectoryA(hkx_directory_path.c_str(), NULL);
-
-		FILE* hkx_file = fopen(hkx_file_path.c_str(), "wb");
-		fwrite(out_buffer, file_size, 1, hkx_file);
-		fclose(hkx_file);
-
-		std::cout << "Saved HKX file to: " << hkx_file_path << std::endl;
-	}
-	else if (entry.GetType() == 41 && (entry.GetSubType() == 6 || entry.GetSubType() == 2 || entry.GetSubType() == 1 || entry.GetSubType() == 0))
-	{
-		CreateDirectoryA((package_output_directory_path + "shader/").c_str(), NULL);
-		const std::string shader_directory_path = package_output_directory_path + "shader/" + std::to_string(entry.GetSubType()) + "/";
-		const std::string shader_file_path = shader_directory_path + output_filename + ".bin";
-		CreateDirectoryA(shader_directory_path.c_str(), NULL);
-
-		FILE* shader_file = fopen(shader_file_path.c_str(), "wb");
-		fwrite(out_buffer, file_size, 1, shader_file);
-		fclose(shader_file);
-
-		const std::string midoto_shader_command = "shader_decompiler\\decompiler.exe -D " + shader_file_path;
-		system(midoto_shader_command.c_str());
-
-		DeleteFileA(shader_file_path.c_str());
-	}
-	else if ((entry.GetType() == 8 || entry.GetType() == 16) && entry.GetSubType() == 0)
-	{
-		const std::string unknown_direcroty_path = package_output_directory_path + "unknown/";
-		const std::string unknown_file_path = unknown_direcroty_path + helpers::to_hex(entry.A) + "_" + output_filename + ".bin";
-		CreateDirectoryA(unknown_direcroty_path.c_str(), NULL);
-
-		FILE* unknown_file = fopen(unknown_file_path.c_str(), "wb");
-		fwrite(out_buffer, file_size, 1, unknown_file);
-		fclose(unknown_file);
-	}
-	else
-	{
-		const std::string unknown_direcroty_path = package_output_directory_path + "unknown/";
-		const std::string unknown_file_path = unknown_direcroty_path + output_filename + ".bin";
-		CreateDirectoryA(unknown_direcroty_path.c_str(), NULL);
-
-		FILE* unknown_file = fopen(unknown_file_path.c_str(), "wb");
-		fwrite(out_buffer, file_size, 1, unknown_file);
-		fclose(unknown_file);
-	}
-
-	delete[] out_buffer;
-
-	return true;
-}
-
-std::vector<Block>& PackageBlock::Get()
-{
-	return block_table;
-}
-
-Block& PackageBlock::operator[](int index)
-{
-	return block_table[index];
-}

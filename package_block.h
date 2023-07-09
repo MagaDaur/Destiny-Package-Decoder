@@ -21,17 +21,3 @@ struct Block
 
 	static const unsigned MAX_SIZE = 0x40000;
 };
-
-class PackageBlock
-{
-public:
-	PackageBlock(FILE*, const PackageHeader&);
-
-	bool ExtractEntryToFile(const std::string&, const Entry&, const std::string&);
-
-	Block& operator[](int);
-	std::vector<Block>& Get();
-private:
-	std::vector<Block> block_table;
-	unsigned char nonce[12] = { 0x84, 0xEA, 0x11, 0xC0, 0xAC, 0xAB, 0xFA, 0x20, 0x33, 0x11, 0x26, 0x99 };
-};

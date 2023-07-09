@@ -18,4 +18,4 @@ private:
 	OodleLZ_Decompress_t OodleLZ_Decompress = NULL;
 };
 
-extern Oodle g_Oodle;
+extern Oodle* g_pOodle;

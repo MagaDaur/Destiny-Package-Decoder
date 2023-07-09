@@ -104,6 +104,8 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -127,20 +129,42 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="helpers.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="OodleDecompress.cpp" />
+    <ClCompile Include="package.cpp" />
     <ClCompile Include="package_block.cpp" />
     <ClCompile Include="package_entry.cpp" />
     <ClCompile Include="package_header.cpp" />
+    <ClCompile Include="Processor.cpp" />
+    <ClCompile Include="Strings.cpp" />
+    <ClCompile Include="structures.cpp" />
+    <ClCompile Include="Textures.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="helpers.h" />
     <ClInclude Include="OodleDecompress.h" />
+    <ClInclude Include="package.h" />
     <ClInclude Include="package_block.h" />
     <ClInclude Include="package_entry.h" />
     <ClInclude Include="package_header.h" />
+    <ClInclude Include="Strings.h" />
+    <ClInclude Include="structures.h" />
+    <ClInclude Include="Textures.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
+    <Import Project="packages\directxtex_uwp.2023.6.14.1\build\native\directxtex_uwp.targets" Condition="Exists('packages\directxtex_uwp.2023.6.14.1\build\native\directxtex_uwp.targets')" />
+    <Import Project="packages\TeximpNet.1.4.3\build\TeximpNet.targets" Condition="Exists('packages\TeximpNet.1.4.3\build\TeximpNet.targets')" />
   </ImportGroup>
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('packages\directxtex_uwp.2023.6.14.1\build\native\directxtex_uwp.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\directxtex_uwp.2023.6.14.1\build\native\directxtex_uwp.targets'))" />
+    <Error Condition="!Exists('packages\TeximpNet.1.4.3\build\TeximpNet.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\TeximpNet.1.4.3\build\TeximpNet.targets'))" />
+  </Target>
 </Project>

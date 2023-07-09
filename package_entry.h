@@ -20,14 +20,3 @@ struct Entry
 
 	friend std::ostream& operator<<(std::ostream&, const Entry&);
 };
-
-class PackageEntry
-{
-public:
-	PackageEntry(FILE*, const PackageHeader&);
-
-	std::vector<Entry>& Get();
-	Entry& operator[](int index);
-private:
-	std::vector<Entry> entry_table;
-};

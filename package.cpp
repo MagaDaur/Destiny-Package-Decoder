@@ -1,154 +1,129 @@
 #include "package.h"
 #include "helpers.h"
 
+#include "Audio.h"
 #include "Textures.h"
 #include "Strings.h"
+#include "Models.h"
+#include "Movie.h"
 
 #include <string>
 
-Package::Package(FILE* package, const PackageHeader& header)
+Package::Package(FILE* package, const PackageHeader& header, const std::string& package_path)
 {
 	nonce[0] ^= (header.package_id >> 8) & 0xFF;
 	nonce[11] ^= header.package_id & 0xFF;
 
-	block_table.resize(header.block_table_size);
-	fseek(package, header.block_table_offset, SEEK_SET);
-	for (unsigned i = 0; i < header.block_table_size; i++)
-		fread(&block_table[i], sizeof(Block), 1, package);
+	this->package_path = package_path;
 
 	entry_table.resize(header.entry_size);
 	fseek(package, header.entry_table_offset, SEEK_SET);
 	for (unsigned i = 0; i < header.entry_size; i++)
 		fread(&entry_table[i], sizeof(Entry), 1, package);
+
+	block_table.resize(header.block_table_size);
+	fseek(package, header.block_table_offset, SEEK_SET);
+	for (unsigned i = 0; i < header.block_table_size; i++)
+		fread(&block_table[i], sizeof(Block), 1, package);
 }
 
-bool Package::ExtractEntryToFile(size_t entry_index, const std::string& package_path, const std::string& patch_folder)
+bool Package::SetupDataTables()
 {
-	const Entry& entry = entry_table[entry_index];
-	const std::string file_name = std::to_string(entry.GetType()) + "_" + std::to_string(entry.GetSubType()) + "_" + helpers::to_hex(entry_index) + "_" + helpers::to_hex(entry.GetRefID());
-	const size_t package_name_begin = package_path.find_last_of('\\') + 1;
-	const size_t package_name_end = package_path.find_last_of('.');
-	const std::string output_patch_directory_path = "output/" + patch_folder;
-	const std::string output_package_directory_path = output_patch_directory_path + package_path.substr(package_name_begin, package_name_end - package_name_begin) + "/";
-
-	CreateDirectoryA(output_patch_directory_path.c_str(), NULL);
-	CreateDirectoryA(output_package_directory_path.c_str(), NULL);
-
-	unsigned file_size = entry.GetFileSize();
-	unsigned char* out_buffer = new (unsigned char[file_size]);
-
-	if (!ExtractEntryToMemory(entry, package_path, out_buffer))
+	for (size_t i = entry_table.size() - 1; int(i) >= 0; i--)
 	{
-		delete[] out_buffer;
-		return false;
+		auto& entry = entry_table[i];
+
+		if (entry.GetType() == 26 && entry.GetSubType() == 7)
+			audio_table.push_back(i);
+		else if (entry.GetType() == 27 && entry.GetSubType() == 1)
+			movie_table.push_back(i);
+		else if (entry.GetType() == 32 && entry.GetSubType() >= 1 && entry.GetSubType() <= 3)
+			texture_table.push_back(i);
+		else if (entry.GetType() == 8 && entry.GetSubType() == 0 && entry.A == 0x808099F1)
+			string_table.push_back(i);
+		else if (entry.GetType() == 8 && entry.GetSubType() == 0 && entry.A == 0x80806F07)
+			model_table.push_back(i);
+		else
+			unknown_table.push_back(i);
 	}
-
-	if (entry.GetType() == 26 && entry.GetSubType() == 7)
-	{
-		const std::string wav_directory_path = output_package_directory_path + "wav/";
-		const std::string temp_wem_file_path = wav_directory_path + file_name + ".wem";
-		CreateDirectoryA(wav_directory_path.c_str(), NULL);
-
-
-		FILE* temp_wem_file = fopen(temp_wem_file_path.c_str(), "wb");
-		fwrite(out_buffer, file_size, 1, temp_wem_file);
-		fclose(temp_wem_file);
-
-		std::string output_filepath = wav_directory_path + file_name + ".wav";
-		std::string vgmstream_command = "vgmstream\\vgmstream-cli.exe " + temp_wem_file_path + " -o " + output_filepath;
-		system(vgmstream_command.c_str());
-
-		DeleteFileA(temp_wem_file_path.c_str());
-	}
-	else if (entry.GetType() == 27 && entry.GetSubType() == 1)
-	{
-		const std::string usm_directory_path = output_package_directory_path + "usm/";
-		const std::string usm_file_path = usm_directory_path + file_name + ".usm";
-		CreateDirectoryA(usm_directory_path.c_str(), NULL);
-
-		FILE* usm_file = fopen(usm_file_path.c_str(), "wb");
-		fwrite(out_buffer, file_size, 1, usm_file);
-		fclose(usm_file);
-	}
-	else if (entry.GetType() == 27 && entry.GetSubType() == 0)
-	{
-		if (1 != 1) // NOT IMPLEMENTED YET
-		{
-			const std::string hkx_directory_path = output_package_directory_path + "hkx/";
-			const std::string hkx_file_path = hkx_directory_path + file_name + ".hkx";
-			CreateDirectoryA(hkx_directory_path.c_str(), NULL);
-
-			FILE* hkx_file = fopen(hkx_file_path.c_str(), "wb");
-			fwrite(out_buffer, file_size, 1, hkx_file);
-			fclose(hkx_file);
-		}
-	}
-	else if (entry.GetType() == 41 && (entry.GetSubType() == 6 || entry.GetSubType() == 2 || entry.GetSubType() == 1 || entry.GetSubType() == 0))
-	{
-		if (1 != 1) // NOT IMPLEMENTED YET
-		{
-			CreateDirectoryA((output_package_directory_path + "shader/").c_str(), NULL);
-			const std::string shader_directory_path = output_package_directory_path + "shader/" + std::to_string(entry.GetSubType()) + "/";
-			const std::string shader_file_path = shader_directory_path + file_name + ".bin";
-			CreateDirectoryA(shader_directory_path.c_str(), NULL);
-
-			FILE* shader_file = fopen(shader_file_path.c_str(), "wb");
-			fwrite(out_buffer, file_size, 1, shader_file);
-			fclose(shader_file);
-
-			const std::string midoto_shader_command = "shader_decompiler\\decompiler.exe -D " + shader_file_path;
-			system(midoto_shader_command.c_str());
-
-			DeleteFileA(shader_file_path.c_str());
-		}
-	}
-	else if (entry.GetType() == 32 && entry.GetSubType() == 1)
-	{
-		const std::string image_direcroty_path = output_package_directory_path + "image/";
-		const std::string image_file_path = image_direcroty_path + file_name + ".dds";
-		const std::wstring w_image_file_path = std::wstring(image_file_path.begin(), image_file_path.end());
-		CreateDirectoryA(image_direcroty_path.c_str(), NULL);
-
-		TextureProcessor::ExtractImageToFile(entry_table[entry.GetRefID()], (TextureHeader*)out_buffer, package_path, w_image_file_path);
-	}
-	else if (entry.GetType() == 40 && entry.GetSubType() == 1)
-	{
-		// SKIP
-	}
-	else if (entry.GetType() == 8 && entry.GetSubType() == 0 && entry.A == 0x808099f1)
-	{
-		const std::string text_direcroty_path = output_package_directory_path + "texts/";
-		const std::string text_file_path = text_direcroty_path + file_name + ".txt";
-		const std::wstring w_text_file_path = std::wstring(text_file_path.begin(), text_file_path.end());
-		CreateDirectoryA(text_direcroty_path.c_str(), NULL);
-
-		StringProcessor::ExportStringsToFile(out_buffer, w_text_file_path);
-	}
-	else
-	{
-		const std::string unknown_direcroty_path = output_package_directory_path + "unknown/";
-		const std::string unknown_file_path = unknown_direcroty_path + file_name + "_" + helpers::to_hex(entry.A) + ".bin";
-		CreateDirectoryA(unknown_direcroty_path.c_str(), NULL);
-
-		FILE* unknown_file = fopen(unknown_file_path.c_str(), "wb");
-		fwrite(out_buffer, file_size, 1, unknown_file);
-		fclose(unknown_file);
-	}
-
-	delete[] out_buffer;
 
 	return true;
 }
 
-bool Package::ExtractEntryToMemory(const Entry& entry, const std::string& package_path, unsigned char* out_buffer)
+bool Package::ExportDataTables(const std::string& output_folder_path)
+{
+	const std::string audio_folder_path = (output_folder_path + "audio/");
+	const std::string video_folder_path = (output_folder_path + "video/");
+	const std::string text_folder_path = (output_folder_path + "text/");
+	const std::string texture_folder_path = (output_folder_path + "texture/");
+	const std::string unknown_folder_path = (output_folder_path + "unknown/");
+
+	if (audio_table.size())
+	{
+		CreateDirectoryA(audio_folder_path.c_str(), NULL);
+		AudioProcessor::ExportAudioToFolder(audio_table, audio_folder_path);
+	}
+		
+	if (movie_table.size())
+	{
+		CreateDirectoryA(video_folder_path.c_str(), NULL);
+		MovieProcessor::ExportMovieToFolder(movie_table, video_folder_path);
+	}
+		
+	if (string_table.size())
+	{
+		CreateDirectoryA(text_folder_path.c_str(), NULL);
+		StringProcessor::ExportTextToFolder(string_table, text_folder_path);
+	}
+
+	//if (texture_table.size())
+	//{
+	//	CreateDirectoryA(texture_folder_path.c_str(), NULL);
+	//	TextureProcessor::ExtractTextureToFolder(texture_table, texture_folder_path);
+	//}
+
+	if (model_table.size())
+	{
+		ModelProcessor::ExportModelToFile(model_table, "hui");
+	}
+
+	if (unknown_table.size())
+	{
+		CreateDirectoryA(unknown_folder_path.c_str(), NULL);
+		for (auto& entry_index : unknown_table)
+		{
+			auto& entry = entry_table[entry_index];
+			auto file_name = unknown_folder_path + helpers::entry_file_name(entry, entry_index) + "_" + helpers::to_hex(entry.A) + ".bin";
+			auto file_size = entry.GetFileSize();
+
+			unsigned char* file_raw_data = new (unsigned char[file_size]);
+			if (!ExtractEntryToMemory(entry, file_raw_data))
+			{
+				delete[] file_raw_data;
+				continue;
+			}
+
+			FILE* unknown_file = fopen(file_name.c_str(), "wb");
+
+			fwrite(file_raw_data, file_size, 1, unknown_file);
+
+			fclose(unknown_file);
+			delete[] file_raw_data;
+		}
+	}
+
+	std::cout << "EntryTable Size: " << entry_table.size() << std::endl;
+
+	return true;
+}
+
+bool Package::ExtractEntryToMemory(const Entry& entry, unsigned char* out_buffer, bool force)
 {
 	unsigned current_block_id = entry.GetStartingBlock();
 	unsigned buffer_offset = 0;
 	unsigned file_size = entry.GetFileSize();
 	unsigned current_patch_id = helpers::get_patch_id(package_path);
 	bool entry_in_current_patch = false;
-
-	if (file_size < 4) return false;
 
 	while (buffer_offset < file_size)
 	{
@@ -178,10 +153,7 @@ bool Package::ExtractEntryToMemory(const Entry& entry, const std::string& packag
 		else
 			memcpy(decomp_buffer, decrypt_buffer, block.size);
 
-		int offset = 0;
-		if (current_block_id == entry.GetStartingBlock())
-			offset = entry.GetStartingBlockOffset();
-
+		int offset = current_block_id == entry.GetStartingBlock() ? entry.GetStartingBlockOffset() : 0;
 		int size = min(Block::MAX_SIZE - offset, file_size - buffer_offset);
 
 		memcpy(out_buffer + buffer_offset, decomp_buffer + offset, size);
@@ -195,9 +167,7 @@ bool Package::ExtractEntryToMemory(const Entry& entry, const std::string& packag
 		delete[] decomp_buffer;
 	}
 
-	if (*(uint32_t*)(out_buffer) == 0xCDCDCDCD) return false; // REDACTED
-
-	return entry_in_current_patch;// || (entry.GetRefID() < entry_table.size()); // <---- Open this with new patch
+	return force || entry_in_current_patch;
 }
 
 const std::vector<Entry>& Package::GetEntryTable()
@@ -208,4 +178,19 @@ const std::vector<Entry>& Package::GetEntryTable()
 const std::vector<Block>& Package::GetBlockTable()
 {
 	return block_table;
+}
+
+Entry* Package::GetEntryByHash(unsigned hash)
+{
+	if (hash == 0xFFFFFFFF)
+		return nullptr;
+
+	for (int i = 0; i < entry_table.size(); i++)
+	{
+		if (entry_table[i].A == hash)
+		{
+			return &entry_table[i];
+		}
+	}
+	return nullptr;
 }

@@ -1,5 +1,6 @@
 ﻿#include "Strings.h"
 #include "structures.h"
+#include "helpers.h"
 
 uintptr_t get_offset(void* from, void* to)
 {
@@ -19,31 +20,73 @@ template <class T> T* read_struct(void* base, unsigned& seek)
 	return ret;
 }
 
-bool StringProcessor::ExportStringsToFile(unsigned char* buffer, const std::wstring& output_file_path)
+bool is_ru_utf8(unsigned char* character)
 {
+	return (character[0] == 0xD0 && character[1] >= 0x90 && character[1] <= 0xBF) || (character[0] == 0xD1 && character[1] >= 0x80 && character[1] <= 0x8F);
+}
 
-	unsigned string_array_size = *(unsigned*)(buffer + 0x50);
-	unsigned string_array_offset = 0x68 + *(unsigned*)(buffer + 0x68);
-	unsigned seek_offset = 0x70;
+bool StringProcessor::ExportTextToFolder(const std::vector<size_t>& string_table, const std::string& output_folder_path)
+{
+	auto& entry_table = g_pPackage->GetEntryTable();
 
-	unsigned char* first_utf8_char = buffer + string_array_offset;
-	if ((first_utf8_char[0] != 0xD0 || first_utf8_char[1] < 0x90 || first_utf8_char[1] > 0xBF) &&
-		(first_utf8_char[0] != 0xD1 || first_utf8_char[1] < 0x80 || first_utf8_char[1] > 0x8F))
-		return false;
 
-	FILE* output_file = _wfopen(output_file_path.c_str(), L"wb");
-
-	for (unsigned int i = 0; i < string_array_size; i++)
+	for (auto& entry_index : string_table)
 	{
-		__c59d1c81* string_buffer_data = (__c59d1c81*)(buffer + seek_offset);
+		auto& entry = entry_table[entry_index];
+		const std::string file_name = helpers::entry_file_name(entry, entry_index);
+		auto file_size = entry.GetFileSize();
+		unsigned char* raw_data_buffer = new (unsigned char[file_size]);
 
-		fwrite(buffer + string_array_offset, 1, string_buffer_data->byte_size, output_file);
-		fwrite(L"\n", 1, 1, output_file);
+		if (!g_pPackage->ExtractEntryToMemory(entry, raw_data_buffer))
+		{
+			delete[] raw_data_buffer;
+			continue;
+		}
 
-		string_array_offset = seek_offset + 0x18 + string_buffer_data->next_string_offset;
-		seek_offset += sizeof(__c59d1c81);
+		if (entry.GetType() == 8 && entry.GetSubType() == 0)
+		{
+			if (entry.A == 0x808099F1)
+			{
+				unsigned string_array_size = *(unsigned*)(raw_data_buffer + 0x50);
+				unsigned string_array_offset = 0x68 + *(unsigned*)(raw_data_buffer + 0x68);
+				unsigned seek_offset = 0x70;
+
+				const std::string txt_file_path = output_folder_path + file_name + ".txt";
+
+				FILE* output_file = fopen(txt_file_path.c_str(), "wb");
+
+				bool has_ru = false;
+
+				for (unsigned int i = 0; i < string_array_size; i++)
+				{
+					__c59d1c81* string_buffer_data = (__c59d1c81*)(raw_data_buffer + seek_offset);
+
+					for (int j = 0; !has_ru && j < string_buffer_data->byte_size; j++)
+					{
+						if (is_ru_utf8(raw_data_buffer + string_array_offset + j))
+						{
+							has_ru = true;
+							break;
+						}
+					}
+
+					fwrite(raw_data_buffer + string_array_offset, 1, string_buffer_data->byte_size, output_file);
+					fwrite(L"\n", 1, 1, output_file);
+
+					string_array_offset = seek_offset + 0x18 + string_buffer_data->next_string_offset;
+					seek_offset += sizeof(__c59d1c81);
+				}
+
+				fclose(output_file);
+
+				if (!has_ru)
+					DeleteFileA(txt_file_path.c_str());
+			}
+		}
+
+		delete[] raw_data_buffer;
 	}
 
-	fclose(output_file);
+
 	return true;
 }

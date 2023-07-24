@@ -25,5 +25,5 @@ struct StringHeader
 class StringProcessor
 {
 public:
-	static bool ExportStringsToFile(unsigned char*, const std::wstring&);
+	static bool ExportTextToFolder(const std::vector<size_t>&, const std::string&);
 };

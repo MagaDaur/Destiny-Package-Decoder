@@ -108,13 +108,7 @@ typedef struct
 	uint32      reserved;
 } DDS_HEADER_DXT10;
 
-class TextureProcessor
-{
-public:
-	static bool GenerateDDSHeader(const TextureHeader*, unsigned char*);
-	static bool ExtractImageToFile(const Entry&, const TextureHeader*, const std::string&, const std::wstring&);
-	static bool ExtractFromEntryToMemory(const Entry&, const TextureHeader*, const std::string&, unsigned char*);
-};
+const uint32 DDS_HEADER_SIZE = sizeof(DDS_HEADER) + sizeof(DDS_HEADER_DXT10) + 4;
 
 uint MakePixelFormatFourCC(char char1, char char2, char char3, char char4);
 
@@ -148,3 +142,11 @@ const DDS_PIXELFORMAT V8U8 = { sizeof(DDS_PIXELFORMAT), DDSBUMPDUDV, 0, 16, 0x00
 const DDS_PIXELFORMAT Q8W8V8U8 = { sizeof(DDS_PIXELFORMAT), DDSBUMPDUDV, 0, 32, 0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000 };
 const DDS_PIXELFORMAT V16U16 = { sizeof(DDS_PIXELFORMAT), DDSBUMPDUDV, 0, 32, 0x0000ffff, 0xffff0000, 0x00000000, 0x00000000 };
 const DDS_PIXELFORMAT DX10 = { sizeof(DDS_PIXELFORMAT), DDSFOURCC, MakePixelFormatFourCC('D', 'X', '1', '0'), 0, 0, 0, 0, 0 };
+
+class TextureProcessor
+{
+public:
+	static bool GenerateDDSHeader(const TextureHeader*, unsigned char*, unsigned int&);
+
+	static bool ExtractTextureToFolder(const std::vector<size_t>&, const std::string&);
+};

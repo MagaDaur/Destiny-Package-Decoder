@@ -179,7 +179,7 @@ bool TextureProcessor::ExtractTextureToFolder(const std::vector<size_t>& texture
 		auto w_file_name = std::wstring(file_name.begin(), file_name.end());
 
         unsigned char* header_raw_data = new (unsigned char[header_file_size]);
-        if (!g_pPackage->ExtractEntryToMemory(header_entry, header_raw_data, true))
+        if (!g_pPackage->ExtractEntryToMemory(header_entry, header_raw_data))
         {
             delete[] header_raw_data;
             continue;

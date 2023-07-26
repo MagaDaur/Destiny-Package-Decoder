@@ -1,6 +1,6 @@
 #pragma once
 #include "package.h"
-#include "structures.h"
+#include "model_structs.h"
 #include <fbxsdk.h>
 
 class VertexBuffer
@@ -34,15 +34,22 @@ private:
 class Model
 {
 public:
-	Model(__076f8080*);
+	Model(const Entry&);
 	~Model();
 
 	bool SetupMesh();
+
+	FbxMesh* CreateMeshFromPart(unsigned);
+
 private:
-	__076f8080* model_header;
+
+	unsigned char* info_raw_data;
+	Destiny_EntityModel* model_info;
 
 	FbxManager* manager;
 	FbxScene* scene;
+
+	std::vector<Destiny_Part> part_table;
 };
 
 class ModelProcessor

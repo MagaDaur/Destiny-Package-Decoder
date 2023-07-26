@@ -150,11 +150,11 @@
     <ClCompile Include="package_entry.cpp" />
     <ClCompile Include="package_header.cpp" />
     <ClCompile Include="Strings.cpp" />
-    <ClCompile Include="structures.cpp" />
     <ClCompile Include="Textures.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Audio.h" />
+    <ClInclude Include="global_structs.h" />
     <ClInclude Include="helpers.h" />
     <ClInclude Include="Models.h" />
     <ClInclude Include="Movie.h" />
@@ -165,7 +165,8 @@
     <ClInclude Include="package_header.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="Strings.h" />
-    <ClInclude Include="structures.h" />
+    <ClInclude Include="model_structs.h" />
+    <ClInclude Include="string_structs.h" />
     <ClInclude Include="Textures.h" />
   </ItemGroup>
   <ItemGroup>

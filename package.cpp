@@ -41,8 +41,8 @@ bool Package::SetupDataTables()
 			texture_table.push_back(i);
 		else if (entry.GetType() == 8 && entry.GetSubType() == 0 && entry.A == 0x808099F1)
 			string_table.push_back(i);
-		else if (entry.GetType() == 8 && entry.GetSubType() == 0 && entry.A == 0x80806F07)
-			model_table.push_back(i);
+		//else if (entry.GetType() == 8 && entry.GetSubType() == 0 && entry.A == 0x80806F07)
+			//model_table.push_back(i);
 		else
 			unknown_table.push_back(i);
 	}
@@ -76,11 +76,11 @@ bool Package::ExportDataTables(const std::string& output_folder_path)
 		StringProcessor::ExportTextToFolder(string_table, text_folder_path);
 	}
 
-	//if (texture_table.size())
-	//{
-	//	CreateDirectoryA(texture_folder_path.c_str(), NULL);
-	//	TextureProcessor::ExtractTextureToFolder(texture_table, texture_folder_path);
-	//}
+	if (texture_table.size())
+	{
+		CreateDirectoryA(texture_folder_path.c_str(), NULL);
+		TextureProcessor::ExtractTextureToFolder(texture_table, texture_folder_path);
+	}
 
 	if (model_table.size())
 	{

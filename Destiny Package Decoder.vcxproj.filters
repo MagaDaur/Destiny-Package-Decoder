@@ -13,86 +13,104 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Models">
+      <UniqueIdentifier>{0038d0dd-9c76-4ff0-a388-dfe7b5e8b04b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Audio">
+      <UniqueIdentifier>{f88978c1-d09f-4dba-b72f-5818ddd131f6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Package">
+      <UniqueIdentifier>{5f5ab977-5a90-4622-ba56-cace0ddb4d97}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Strings">
+      <UniqueIdentifier>{c3800db5-c43f-4d23-82ba-b67e63cd0019}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Textures">
+      <UniqueIdentifier>{04aba524-4136-45dd-b78e-a30fcf6dcf7b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="package_header.cpp">
-      <Filter>Resource Files</Filter>
-    </ClCompile>
-    <ClCompile Include="package_entry.cpp">
-      <Filter>Resource Files</Filter>
-    </ClCompile>
-    <ClCompile Include="package_block.cpp">
-      <Filter>Resource Files</Filter>
-    </ClCompile>
-    <ClCompile Include="OodleDecompress.cpp">
-      <Filter>Resource Files</Filter>
-    </ClCompile>
     <ClCompile Include="helpers.cpp">
-      <Filter>Resource Files</Filter>
-    </ClCompile>
-    <ClCompile Include="package.cpp">
-      <Filter>Resource Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Textures.cpp">
-      <Filter>Resource Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Strings.cpp">
-      <Filter>Resource Files</Filter>
-    </ClCompile>
-    <ClCompile Include="structures.cpp">
-      <Filter>Resource Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Audio.cpp">
-      <Filter>Resource Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Models.cpp">
       <Filter>Resource Files</Filter>
     </ClCompile>
     <ClCompile Include="Movie.cpp">
       <Filter>Resource Files</Filter>
     </ClCompile>
+    <ClCompile Include="Models.cpp">
+      <Filter>Models</Filter>
+    </ClCompile>
+    <ClCompile Include="Audio.cpp">
+      <Filter>Audio</Filter>
+    </ClCompile>
+    <ClCompile Include="package.cpp">
+      <Filter>Package</Filter>
+    </ClCompile>
+    <ClCompile Include="package_block.cpp">
+      <Filter>Package</Filter>
+    </ClCompile>
+    <ClCompile Include="OodleDecompress.cpp">
+      <Filter>Package</Filter>
+    </ClCompile>
+    <ClCompile Include="package_entry.cpp">
+      <Filter>Package</Filter>
+    </ClCompile>
+    <ClCompile Include="package_header.cpp">
+      <Filter>Package</Filter>
+    </ClCompile>
+    <ClCompile Include="Strings.cpp">
+      <Filter>Strings</Filter>
+    </ClCompile>
+    <ClCompile Include="Textures.cpp">
+      <Filter>Textures</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="package_header.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="package_entry.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="package_block.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="OodleDecompress.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="helpers.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="package.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Textures.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Strings.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="structures.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="resource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Audio.h">
+    <ClInclude Include="Movie.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Models.h">
-      <Filter>Header Files</Filter>
+      <Filter>Models</Filter>
     </ClInclude>
-    <ClInclude Include="Movie.h">
+    <ClInclude Include="Audio.h">
+      <Filter>Audio</Filter>
+    </ClInclude>
+    <ClInclude Include="OodleDecompress.h">
+      <Filter>Package</Filter>
+    </ClInclude>
+    <ClInclude Include="package.h">
+      <Filter>Package</Filter>
+    </ClInclude>
+    <ClInclude Include="package_block.h">
+      <Filter>Package</Filter>
+    </ClInclude>
+    <ClInclude Include="package_entry.h">
+      <Filter>Package</Filter>
+    </ClInclude>
+    <ClInclude Include="package_header.h">
+      <Filter>Package</Filter>
+    </ClInclude>
+    <ClInclude Include="model_structs.h">
+      <Filter>Models</Filter>
+    </ClInclude>
+    <ClInclude Include="Strings.h">
+      <Filter>Strings</Filter>
+    </ClInclude>
+    <ClInclude Include="string_structs.h">
+      <Filter>Strings</Filter>
+    </ClInclude>
+    <ClInclude Include="Textures.h">
+      <Filter>Textures</Filter>
+    </ClInclude>
+    <ClInclude Include="global_structs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

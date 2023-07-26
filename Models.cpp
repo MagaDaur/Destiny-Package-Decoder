@@ -50,7 +50,7 @@ std::vector<VectorInt3> IndexBuffer::Get(unsigned offset, int count, int type)
 
 	std::vector<VectorInt3> ret;
 
-	for (int i = 0; i < count - 2;)
+	for (int i = 0; i < count;)
 	{
 		int x = 0, y = 0, z = 0;
 
@@ -58,37 +58,30 @@ std::vector<VectorInt3> IndexBuffer::Get(unsigned offset, int count, int type)
 		memcpy(&y, raw_data_offset + stride * (i + 1), stride);
 		memcpy(&z, raw_data_offset + stride * (i + 2), stride);
 
-		if (header->is_uint32)
+		if (x == 0xFFFF || x == 0xFFFFFFFF)
 		{
-			if (z == 0xFFFFFFFF)
-			{
-				vertex_count = 0; i++;
-				continue;
-			}
+			vertex_count = 0;
+			i++;
+			continue;
 		}
-		else
+
+		if (y == 0xFFFF || y == 0xFFFFFFFF)
 		{
-			if (x == 0xFFFF)
-			{
-				vertex_count = 0; i++;
-				continue;
-			}
-			else if (y == 0xFFFF)
-			{
-				vertex_count = 0; i++;
-				continue;
-			}
-			else if (z == 0xFFFF)
-			{
-				vertex_count = 0; i++;
-				continue;
-			}
+			vertex_count = 0;
+			i += 2;
+			continue;
+		}
+
+		if (z == 0xFFFF || z == 0xFFFFFFFF)
+		{
+			vertex_count = 0;
+			i += 3;
+			continue;
 		}
 
 		if (type == 3)
 		{
 			ret.push_back(VectorInt3(x, y, z));
-
 			i += 3;
 		}
 		else if (type == 5)
@@ -96,12 +89,11 @@ std::vector<VectorInt3> IndexBuffer::Get(unsigned offset, int count, int type)
 			if (vertex_count % 2 == 0)
 				ret.push_back(VectorInt3(x, y, z));
 			else
-				ret.push_back(VectorInt3(x, z, y));
+				ret.push_back(VectorInt3(y, z, x));
 
+			vertex_count++;
 			i++;
 		}
-
-		vertex_count++;
 	}
 
 	return ret;
@@ -117,9 +109,12 @@ IndexBuffer::~IndexBuffer()
 	header = nullptr;
 }
 
-Model::Model(__076f8080* header)
+Model::Model(const Entry& model_entry)
 {
-	model_header = header;
+	info_raw_data = new (unsigned char[model_entry.GetFileSize()]);
+	g_pPackage->ExtractEntryToMemory(model_entry, info_raw_data);
+
+	model_info = (Destiny_EntityModel*)info_raw_data;
 
 	manager = FbxManager::Create();
 	scene = FbxScene::Create(manager, "");
@@ -129,11 +124,22 @@ Model::~Model()
 {
 	scene->Destroy();
 	manager->Destroy();
+	delete[] info_raw_data;
 }
 
 bool Model::SetupMesh()
 {
+
+
 	return true;
+}
+
+FbxMesh* Model::CreateMeshFromPart(unsigned part_index)
+{
+	FbxMesh* mesh = FbxMesh::Create(manager, std::to_string(part_index).c_str());
+	
+
+	return mesh;
 }
 
 bool ModelProcessor::ExportModelToFile(const std::vector<size_t>& model_table, const std::string& output_folder_path)
@@ -159,12 +165,12 @@ bool ModelProcessor::ExportModelToFile(const std::vector<size_t>& model_table, c
 		if (entry.A == 0x80806F07)
 		{
 
-			__076f8080* model_info = (__076f8080*)raw_file_data;
+			Destiny_EntityModel* model_info = (Destiny_EntityModel*)raw_file_data;
 			uint64_t seek = 0x18 + model_info->mesh_list_offset + sizeof(__b89f8080);
 			
 			for (int i = 0; i < model_info->mesh_list_count; i++)
 			{
-				__c56e8080* mesh = (__c56e8080*)(raw_file_data + seek);
+				Destiny_Mesh* mesh = (Destiny_Mesh*)(raw_file_data + seek);
 
 				Entry* vertex_buffer_entry = g_pPackage->GetEntryByHash(mesh->vb_pos_hash);
 				Entry* index_buffer_entry = g_pPackage->GetEntryByHash(mesh->ib_hash);
@@ -181,17 +187,17 @@ bool ModelProcessor::ExportModelToFile(const std::vector<size_t>& model_table, c
 
 					for (int j = 0; j < mesh->parts_list_count; j++)
 					{
-						__cb6e8080* part = (__cb6e8080*)(raw_file_data + part_seek);
+						Destiny_Part* part = (Destiny_Part*)(raw_file_data + part_seek);
 
 						auto v_vertex_buffer = index_buffer.Get(part->index_offset, part->index_count, part->primitive_type);
 
 						
 
-						part_seek += sizeof(__cb6e8080);
+						part_seek += sizeof(Destiny_Part);
 					}
 				}
 
-				seek += sizeof(__c56e8080);
+				seek += sizeof(Destiny_Mesh);
 			}
 		}
 

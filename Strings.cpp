@@ -1,6 +1,6 @@
 ﻿#include "Strings.h"
-#include "structures.h"
 #include "helpers.h"
+#include "string_structs.h"
 
 uintptr_t get_offset(void* from, void* to)
 {
@@ -25,6 +25,19 @@ bool is_ru_utf8(unsigned char* character)
 	return (character[0] == 0xD0 && character[1] >= 0x90 && character[1] <= 0xBF) || (character[0] == 0xD1 && character[1] >= 0x80 && character[1] <= 0x8F);
 }
 
+bool has_ru_utf8(unsigned char* str, uint64_t size)
+{
+	for (int j = 0; j < size; j++)
+	{
+		if (is_ru_utf8(str + j))
+		{
+			return true;
+			break;
+		}
+	}
+	return false;
+}
+
 bool StringProcessor::ExportTextToFolder(const std::vector<size_t>& string_table, const std::string& output_folder_path)
 {
 	auto& entry_table = g_pPackage->GetEntryTable();
@@ -47,9 +60,8 @@ bool StringProcessor::ExportTextToFolder(const std::vector<size_t>& string_table
 		{
 			if (entry.A == 0x808099F1)
 			{
-				unsigned string_array_size = *(unsigned*)(raw_data_buffer + 0x50);
-				unsigned string_array_offset = 0x68 + *(unsigned*)(raw_data_buffer + 0x68);
-				unsigned seek_offset = 0x70;
+				Destiny_StringArray* header = (Destiny_StringArray*)raw_data_buffer;
+				uint64_t seek = 0x10 + header->array_offset + sizeof(__b89f8080);
 
 				const std::string txt_file_path = output_folder_path + file_name + ".txt";
 
@@ -57,24 +69,18 @@ bool StringProcessor::ExportTextToFolder(const std::vector<size_t>& string_table
 
 				bool has_ru = false;
 
-				for (unsigned int i = 0; i < string_array_size; i++)
+				for (unsigned int i = 0; i < header->array_size; i++)
 				{
-					__c59d1c81* string_buffer_data = (__c59d1c81*)(raw_data_buffer + seek_offset);
+					__f7998080* string_data = (__f7998080*)(raw_data_buffer + seek);
+					unsigned char* string_buffer = raw_data_buffer + seek + 0x8 + string_data->string_offset;
 
-					for (int j = 0; !has_ru && j < string_buffer_data->byte_size; j++)
-					{
-						if (is_ru_utf8(raw_data_buffer + string_array_offset + j))
-						{
-							has_ru = true;
-							break;
-						}
-					}
+					if (!has_ru && has_ru_utf8(string_buffer, string_data->byte_length))
+						has_ru = true;
 
-					fwrite(raw_data_buffer + string_array_offset, 1, string_buffer_data->byte_size, output_file);
+					fwrite(string_buffer, 1, string_data->byte_length, output_file);
 					fwrite(L"\n", 1, 1, output_file);
 
-					string_array_offset = seek_offset + 0x18 + string_buffer_data->next_string_offset;
-					seek_offset += sizeof(__c59d1c81);
+					seek += sizeof(__f7998080);
 				}
 
 				fclose(output_file);

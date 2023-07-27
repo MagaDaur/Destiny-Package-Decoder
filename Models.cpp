@@ -166,7 +166,7 @@ bool ModelProcessor::ExportModelToFile(const std::vector<size_t>& model_table, c
 		{
 
 			Destiny_EntityModel* model_info = (Destiny_EntityModel*)raw_file_data;
-			uint64_t seek = 0x18 + model_info->mesh_list_offset + sizeof(__b89f8080);
+			uint64_t seek = 0x18 + model_info->mesh_list_offset + sizeof(Destiny_ArrayInfo);
 			
 			for (int i = 0; i < model_info->mesh_list_count; i++)
 			{

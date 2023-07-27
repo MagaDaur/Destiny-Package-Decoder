@@ -20,16 +20,16 @@ template <class T> T* read_struct(void* base, unsigned& seek)
 	return ret;
 }
 
-bool is_ru_utf8(unsigned char* character)
+bool is_ru_char(unsigned char* character)
 {
 	return (character[0] == 0xD0 && character[1] >= 0x90 && character[1] <= 0xBF) || (character[0] == 0xD1 && character[1] >= 0x80 && character[1] <= 0x8F);
 }
 
-bool has_ru_utf8(unsigned char* str, uint64_t size)
+bool is_ru_string(unsigned char* str, uint64_t size)
 {
 	for (int j = 0; j < size; j++)
 	{
-		if (is_ru_utf8(str + j))
+		if (is_ru_char(str + j))
 		{
 			return true;
 			break;
@@ -61,7 +61,7 @@ bool StringProcessor::ExportTextToFolder(const std::vector<size_t>& string_table
 			if (entry.A == 0x808099F1)
 			{
 				Destiny_StringArray* header = (Destiny_StringArray*)raw_data_buffer;
-				uint64_t seek = 0x10 + header->array_offset + sizeof(__b89f8080);
+				uint64_t seek = 0x10 + header->array_offset + sizeof(Destiny_ArrayInfo);
 
 				const std::string txt_file_path = output_folder_path + file_name + ".txt";
 
@@ -71,16 +71,16 @@ bool StringProcessor::ExportTextToFolder(const std::vector<size_t>& string_table
 
 				for (unsigned int i = 0; i < header->array_size; i++)
 				{
-					__f7998080* string_data = (__f7998080*)(raw_data_buffer + seek);
+					Destiny_StringData* string_data = (Destiny_StringData*)(raw_data_buffer + seek);
 					unsigned char* string_buffer = raw_data_buffer + seek + 0x8 + string_data->string_offset;
 
-					if (!has_ru && has_ru_utf8(string_buffer, string_data->byte_length))
+					if (!has_ru && is_ru_string(string_buffer, string_data->byte_length))
 						has_ru = true;
 
 					fwrite(string_buffer, 1, string_data->byte_length, output_file);
 					fwrite(L"\n", 1, 1, output_file);
 
-					seek += sizeof(__f7998080);
+					seek += sizeof(Destiny_StringData);
 				}
 
 				fclose(output_file);

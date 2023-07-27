@@ -10,7 +10,7 @@ struct Destiny_StringArray
 	uint64_t array_offset; // 0x10
 };
 
-struct __f7998080 // string array
+struct Destiny_StringData // string data
 {
 	uint64_t unk1; // 0x0
 

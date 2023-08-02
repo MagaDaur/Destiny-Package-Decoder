@@ -64,20 +64,19 @@ struct Destiny_EntityModel // entity model info
 
 struct Destiny_Mesh // mesh info
 {
-	//uint32_t unk1; // 0x0
-	uint32_t vb_pos_hash; // 0x4
-	uint32_t vb_normal_hash; // 0x8
-	uint32_t vb_old_hash; // 0xC
-	uint32_t unk2; // 0x10
-	uint32_t ib_hash; // 0x14
-	uint32_t vb_color_hash; // 0x18
-	uint32_t vb_sps_hash; // 0x1C
-	uint32_t unk3; // 0x20
+	uint32_t vb_pos_hash; // 0x0
+	uint32_t vb_normal_hash; // 0x4
+	uint32_t vb_old_hash; // 0x8
+	uint32_t unk2; // 0xC
+	uint32_t ib_hash; // 0x10
+	uint32_t vb_color_hash; // 0x14
+	uint32_t vb_sps_hash; // 0x18
+	uint32_t unk3; // 0x1C
 
-	uint64_t parts_list_count; // 0x24
-	uint64_t parts_list_offset; // 0x2C
+	uint64_t parts_list_count; // 0x20
+	uint64_t parts_list_offset; // 0x28
 
-	int16_t stage_part_offsets[37]; // 0x34
+	int16_t stage_part_offsets[37]; // 0x30
 };
 
 struct Destiny_Part // part info
@@ -101,7 +100,7 @@ struct Destiny_Part // part info
 struct __index_header
 {
 	uint8_t unk1;
-	bool is_uint32;
+	uint8_t is_uint32;
 	int16_t unk2;
 	int32_t unk3;
 	uint64_t size;

@@ -151,6 +151,8 @@
     <ClCompile Include="package_header.cpp" />
     <ClCompile Include="Strings.cpp" />
     <ClCompile Include="Textures.cpp" />
+    <ClCompile Include="VertexBuffer.cpp" />
+    <ClCompile Include="IndexBuffer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Audio.h" />
@@ -168,6 +170,8 @@
     <ClInclude Include="model_structs.h" />
     <ClInclude Include="string_structs.h" />
     <ClInclude Include="Textures.h" />
+    <ClInclude Include="VertexBuffer.h" />
+    <ClInclude Include="IndexBuffer.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

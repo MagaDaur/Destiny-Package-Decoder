@@ -3,34 +3,6 @@
 #include "model_structs.h"
 #include <fbxsdk.h>
 
-class VertexBuffer
-{
-public:
-	VertexBuffer(const Entry&);
-	~VertexBuffer();
-
-
-private:
-	unsigned char* buffer_raw_data;
-	unsigned char* header_raw_data;
-
-	__vertex_header* header;
-};
-
-class IndexBuffer
-{
-public:
-	IndexBuffer(const Entry&);
-	~IndexBuffer();
-
-	std::vector<VectorInt3> Get(unsigned, int, int);
-private:
-	unsigned char* buffer_raw_data;
-	unsigned char* header_raw_data;
-
-	__index_header* header;
-};
-
 class Model
 {
 public:
@@ -38,6 +10,7 @@ public:
 	~Model();
 
 	bool SetupMesh();
+	bool ProcessPartTable();
 
 	FbxMesh* CreateMeshFromPart(unsigned);
 

@@ -42,6 +42,12 @@
     <ClCompile Include="Models.cpp">
       <Filter>Models</Filter>
     </ClCompile>
+    <ClCompile Include="VertexBuffer.cpp">
+      <Filter>Models</Filter>
+    </ClCompile>
+    <ClCompile Include="IndexBuffer.cpp">
+      <Filter>Models</Filter>
+    </ClCompile>
     <ClCompile Include="Audio.cpp">
       <Filter>Audio</Filter>
     </ClCompile>
@@ -99,6 +105,12 @@
       <Filter>Package</Filter>
     </ClInclude>
     <ClInclude Include="model_structs.h">
+      <Filter>Models</Filter>
+    </ClInclude>
+    <ClInclude Include="VertexBuffer.h">
+      <Filter>Models</Filter>
+    </ClInclude>
+    <ClInclude Include="IndexBuffer.h">
       <Filter>Models</Filter>
     </ClInclude>
     <ClInclude Include="Strings.h">

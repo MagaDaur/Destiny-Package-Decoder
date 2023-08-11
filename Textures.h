@@ -59,14 +59,16 @@ const uint DDSBUMPDUDV = 0x00080000;  // DDPFBUMPDUDV
 
 struct TextureHeader
 {
-	unsigned short size;
-	unsigned short unk;
-	unsigned format;
-	unsigned char pad1[0x1A];
-	unsigned short width;
-	unsigned short height;
-	unsigned short depth;
-	unsigned short array_size;
+	uint32_t size; // 0x0
+	uint32_t format; // 0x4
+	uint8_t pad1[0x1A]; // 0x8
+	uint16_t width; // 0x22
+	uint16_t height; // 0x24
+	uint16_t depth; // 0x26
+	uint16_t array_size; // 0x28
+	uint16_t miplevels; // 0x2A
+	uint8_t pad2[0x10]; // 0x2C
+	uint32_t buffer_ref;
 };
 
 struct DDS_PIXELFORMAT

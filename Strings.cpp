@@ -50,7 +50,7 @@ bool StringProcessor::ExportTextToFolder(const std::vector<size_t>& string_table
 		auto file_size = entry.GetFileSize();
 		unsigned char* raw_data_buffer = new (unsigned char[file_size]);
 
-		if (!g_pPackage->ExtractEntryToMemory(entry, raw_data_buffer))
+		if (!g_pPackage->ExtractEntry(entry, raw_data_buffer))
 		{
 			delete[] raw_data_buffer;
 			continue;

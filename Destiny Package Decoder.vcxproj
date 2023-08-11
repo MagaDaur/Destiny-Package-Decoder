@@ -170,8 +170,8 @@
     <ClInclude Include="model_structs.h" />
     <ClInclude Include="string_structs.h" />
     <ClInclude Include="Textures.h" />
-    <ClInclude Include="VertexBuffer.h" />
     <ClInclude Include="IndexBuffer.h" />
+    <ClInclude Include="VertexBuffer.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

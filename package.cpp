@@ -9,8 +9,10 @@
 
 #include <string>
 
-Package::Package(FILE* package, const PackageHeader& header, const std::string& package_path)
+Package::Package(FILE* package, const std::string& package_path)
 {
+	PackageHeader header(package);
+
 	nonce[0] ^= (header.package_id >> 8) & 0xFF;
 	nonce[11] ^= header.package_id & 0xFF;
 
@@ -29,11 +31,13 @@ Package::Package(FILE* package, const PackageHeader& header, const std::string& 
 
 bool Package::SetupDataTables()
 {
-	for (size_t i = entry_table.size() - 1; int(i) >= 0; i--)
+	for (int i = 0; i < entry_table.size(); i++)
 	{
 		auto& entry = entry_table[i];
 
-		if (entry.GetType() == 26 && entry.GetSubType() == 7)
+		if(package_path.find("redacted") != std::string::npos)
+			unknown_table.push_back(i);
+		else if (entry.GetType() == 26 && entry.GetSubType() == 7)
 			audio_table.push_back(i);
 		else if (entry.GetType() == 27 && entry.GetSubType() == 1)
 			movie_table.push_back(i);
@@ -97,7 +101,7 @@ bool Package::ExportDataTables(const std::string& output_folder_path)
 			auto file_size = entry.GetFileSize();
 
 			unsigned char* file_raw_data = new (unsigned char[file_size]);
-			if (!ExtractEntryToMemory(entry, file_raw_data))
+			if (!ExtractEntry(entry, file_raw_data))
 			{
 				delete[] file_raw_data;
 				continue;
@@ -117,7 +121,30 @@ bool Package::ExportDataTables(const std::string& output_folder_path)
 	return true;
 }
 
-bool Package::ExtractEntryToMemory(const Entry& entry, unsigned char* out_buffer, bool force)
+bool Package::ExtractEntryByReference(unsigned reference, unsigned char* out_buffer)
+{
+	if (reference == 0xFFFFFFFF) return false;
+
+	Entry temp_entry{}; temp_entry.A = reference;
+
+	std::string ref_package_path = this->package_path;
+	ref_package_path.replace(ref_package_path.end() - 9, ref_package_path.end() - 6, helpers::to_hex(temp_entry.GetPackageRefID()));
+
+	FILE* ref_package_file = fopen(ref_package_path.c_str(), "rb");
+	if (!ref_package_file) return false;
+
+	Package ref_package(ref_package_file, ref_package_path);
+
+	Entry ref_entry = ref_package.entry_table[temp_entry.GetRefID()];
+
+	bool result = ref_package.ExtractEntry(ref_entry, out_buffer, true);
+
+	fclose(ref_package_file);
+
+	return result;
+}
+
+bool Package::ExtractEntry(const Entry& entry, unsigned char* out_buffer, bool force)
 {
 	unsigned current_block_id = entry.GetStartingBlock();
 	unsigned buffer_offset = 0;
@@ -167,7 +194,7 @@ bool Package::ExtractEntryToMemory(const Entry& entry, unsigned char* out_buffer
 		delete[] decomp_buffer;
 	}
 
-	return force || entry_in_current_patch;
+	return true; // force || entry_in_current_patch;
 }
 
 const std::vector<Entry>& Package::GetEntryTable()
@@ -185,12 +212,8 @@ Entry* Package::GetEntryByHash(unsigned hash)
 	if (hash == 0xFFFFFFFF)
 		return nullptr;
 
-	for (int i = 0; i < entry_table.size(); i++)
-	{
-		if (entry_table[i].A == hash)
-		{
-			return &entry_table[i];
-		}
-	}
-	return nullptr;
+	size_t entry_index = (hash & 0x1FFF);
+	size_t ref_entry_index = entry_table[entry_index].GetRefID();
+
+	return &entry_table[entry_index];
 }

@@ -1,10 +1,12 @@
 #include "Models.h"
 #include "helpers.h"
+#include "VertexBuffer.h"
+#include "IndexBuffer.h"
 
 Model::Model(const Entry& model_entry)
 {
 	info_raw_data = new (unsigned char[model_entry.GetFileSize()]);
-	g_pPackage->ExtractEntryToMemory(model_entry, info_raw_data);
+	g_pPackage->ExtractEntry(model_entry, info_raw_data);
 
 	model_info = (Destiny_EntityModel*)info_raw_data;
 
@@ -21,12 +23,14 @@ Model::~Model()
 
 bool Model::SetupMesh()
 {
+	auto& entry_table = g_pPackage->GetEntryTable();
+
 	uint64_t seek = 0x18 + model_info->mesh_list_offset + sizeof(Destiny_ArrayInfo);
 	
 	Destiny_Mesh* mesh = (Destiny_Mesh*)(info_raw_data + seek);
 
-	Entry* vertex_buffer_entry = g_pPackage->GetEntryByHash(mesh->vb_pos_hash);
-	Entry* index_buffer_entry = g_pPackage->GetEntryByHash(mesh->ib_hash);
+	auto vertex_buffer_entry = g_pPackage->GetEntryByHash(mesh->vb_pos_hash);
+	auto index_buffer_entry = g_pPackage->GetEntryByHash(mesh->ib_hash);
 
 	if (!vertex_buffer_entry || !index_buffer_entry)
 		return false;
@@ -78,8 +82,6 @@ FbxMesh* Model::CreateMeshFromPart(unsigned part_index)
 
 bool ModelProcessor::ExportModelToFile(const std::vector<size_t>& model_table, const std::string& output_folder_path)
 {
-	unsigned char* raw_file_data;
-
 	auto& entry_table = g_pPackage->GetEntryTable();
 	for (auto& entry_index : model_table)
 	{

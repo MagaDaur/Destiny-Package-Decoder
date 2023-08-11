@@ -12,7 +12,7 @@ bool AudioProcessor::ExportAudioToFolder(const std::vector<size_t>& audio_table,
 		auto file_size = entry.GetFileSize();
 		unsigned char* raw_data_buffer = new (unsigned char[file_size]);
 
-		if (!g_pPackage->ExtractEntryToMemory(entry, raw_data_buffer))
+		if (!g_pPackage->ExtractEntry(entry, raw_data_buffer))
 		{
 			delete[] raw_data_buffer;
 			continue;
@@ -27,7 +27,7 @@ bool AudioProcessor::ExportAudioToFolder(const std::vector<size_t>& audio_table,
 			fclose(temp_wem_file);
 
 			std::string output_filepath = folder_path + file_name + ".wav";
-			std::string vgmstream_command = "vgmstream\\vgmstream-cli.exe " + wem_file_path + " -o " + output_filepath;
+			std::string vgmstream_command = "external\\vgmstream\\vgmstream-cli.exe " + wem_file_path + " -o " + output_filepath;
 			system(vgmstream_command.c_str());
 
 			DeleteFileA(wem_file_path.c_str());
@@ -37,6 +37,3 @@ bool AudioProcessor::ExportAudioToFolder(const std::vector<size_t>& audio_table,
 	}
 	return true;
 }
-
-
-// https://github.com/MontagueM/Charm/blob/ef4837efb6039d72d0b5a315321b52fa4129fcba/Field/Entities/EntityStructs.cs#L396

@@ -36,13 +36,11 @@ int main()
 
 	FILE* package_file = fopen(package_path.c_str(), "rb");
 
-	PackageHeader package_header(package_file);
-	g_pPackage = new Package(package_file, package_header, package_path);
+	g_pPackage = new Package(package_file, package_path);
 	g_pOodle = new Oodle();
 
 	g_pPackage->SetupDataTables();
 	g_pPackage->ExportDataTables(output_folder_path);
-	
 
 	fclose(package_file);
 	delete g_pPackage;

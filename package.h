@@ -5,16 +5,18 @@
 #include "package_header.h"
 #include "package_block.h"
 #include "package_entry.h"
+#include <optional>
 
 class Package
 {
 public:
-	Package(FILE*, const PackageHeader&, const std::string&);
+	Package(FILE*, const std::string&);
 
 	const std::vector<Entry>& GetEntryTable();
 	const std::vector<Block>& GetBlockTable();
 
-	bool ExtractEntryToMemory(const Entry&, unsigned char*, bool force = false);
+	bool ExtractEntry(const Entry&, unsigned char*, bool force = false);
+	bool ExtractEntryByReference(unsigned, unsigned char*);
 
 	bool SetupDataTables();
 	bool ExportDataTables(const std::string&);

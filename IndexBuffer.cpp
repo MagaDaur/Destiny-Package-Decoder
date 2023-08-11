@@ -1,19 +1,18 @@
 #include "IndexBuffer.h"
-#include "package.h"
 
 IndexBuffer::IndexBuffer(const Entry& header_entry)
 {
 	auto& entry_table = g_pPackage->GetEntryTable();
 
 	header_raw_data = new (unsigned char[header_entry.GetFileSize()]);
-	g_pPackage->ExtractEntryToMemory(header_entry, header_raw_data);
+	g_pPackage->ExtractEntry(header_entry, header_raw_data);
 
 	header = (__index_header*)header_raw_data;
 
 	auto& buffer_entry = entry_table[header_entry.GetRefID()];
 
 	buffer_raw_data = new (unsigned char[buffer_entry.GetFileSize()]);
-	g_pPackage->ExtractEntryToMemory(buffer_entry, buffer_raw_data);
+	g_pPackage->ExtractEntry(buffer_entry, buffer_raw_data);
 }
 
 std::vector<VectorInt3> IndexBuffer::Get(unsigned offset, int count, int type)

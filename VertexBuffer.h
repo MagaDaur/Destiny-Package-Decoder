@@ -1,4 +1,7 @@
+#pragma once
+
 #include "model_structs.h"
+#include "package.h"
 
 class VertexBuffer
 {

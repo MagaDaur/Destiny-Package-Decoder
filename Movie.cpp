@@ -4,6 +4,8 @@
 bool MovieProcessor::ExportMovieToFolder(const std::vector<size_t>& movie_table, const std::string& folder_path)
 {
 	auto& entry_table = g_pPackage->GetEntryTable();
+	bool has_written = false;
+
 	for (auto& entry_index : movie_table)
 	{
 		auto& entry = entry_table[entry_index];
@@ -25,10 +27,12 @@ bool MovieProcessor::ExportMovieToFolder(const std::vector<size_t>& movie_table,
 			FILE* usm_file = fopen(usm_file_path.c_str(), "wb");
 			fwrite(raw_data_buffer, file_size, 1, usm_file);
 			fclose(usm_file);
+
+			has_written = true;
 		}
 
 		delete[] raw_data_buffer;
 	}
 
-	return true;
+	return has_written;
 }

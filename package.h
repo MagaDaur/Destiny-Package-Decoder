@@ -16,12 +16,12 @@ public:
 	const std::vector<Block>& GetBlockTable();
 
 	bool ExtractEntry(const Entry&, unsigned char*, bool force = false);
-	bool ExtractEntryByReference(unsigned, unsigned char*);
+	bool ExtractEntryByReference(unsigned, unsigned char*, unsigned&);
+
+	std::optional<Entry> GetEntryByReference(unsigned);
 
 	bool SetupDataTables();
 	bool ExportDataTables(const std::string&);
-
-	Entry* GetEntryByHash(unsigned);
 
 private:
 	unsigned char nonce[12] = { 0x84, 0xEA, 0x11, 0xC0, 0xAC, 0xAB, 0xFA, 0x20, 0x33, 0x11, 0x26, 0x99 };

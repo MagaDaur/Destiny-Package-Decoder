@@ -1,8 +1,10 @@
 #include "VertexBuffer.h"
 
-VertexBuffer::VertexBuffer(const Entry& header_entry)
+VertexBuffer::VertexBuffer(unsigned header_hash)
 {
 	auto& entry_table = g_pPackage->GetEntryTable();
+
+	Entry header_entry;
 
 	header_raw_data = new (unsigned char[header_entry.GetFileSize()]);
 	g_pPackage->ExtractEntry(header_entry, header_raw_data);

@@ -6,7 +6,7 @@
 class VertexBuffer
 {
 public:
-	VertexBuffer(const Entry&);
+	VertexBuffer(unsigned);
 	~VertexBuffer();
 
 

@@ -9,6 +9,9 @@
 
 #include <string>
 
+#include <filesystem>
+namespace fs = std::filesystem;
+
 Package::Package(FILE* package, const std::string& package_path)
 {
 	PackageHeader header(package);
@@ -47,8 +50,8 @@ bool Package::SetupDataTables()
 			string_table.push_back(i);
 		//else if (entry.GetType() == 8 && entry.GetSubType() == 0 && entry.A == 0x80806F07)
 			//model_table.push_back(i);
-		else
-			unknown_table.push_back(i);
+		//else
+			//unknown_table.push_back(i);
 	}
 
 	return true;
@@ -59,41 +62,53 @@ bool Package::ExportDataTables(const std::string& output_folder_path)
 	const std::string audio_folder_path = (output_folder_path + "audio/");
 	const std::string video_folder_path = (output_folder_path + "video/");
 	const std::string text_folder_path = (output_folder_path + "text/");
-	const std::string texture_folder_path = (output_folder_path + "texture/");
+	const std::string texture_folder_path = (output_folder_path + "image/");
 	const std::string unknown_folder_path = (output_folder_path + "unknown/");
+
+	unsigned status = 0;
 
 	if (audio_table.size())
 	{
 		CreateDirectoryA(audio_folder_path.c_str(), NULL);
-		AudioProcessor::ExportAudioToFolder(audio_table, audio_folder_path);
+		status |= AudioProcessor::ExportAudioToFolder(audio_table, audio_folder_path) << 0;
+		if (~status & 1)
+			fs::remove_all(audio_folder_path);
 	}
 		
 	if (movie_table.size())
 	{
 		CreateDirectoryA(video_folder_path.c_str(), NULL);
-		MovieProcessor::ExportMovieToFolder(movie_table, video_folder_path);
+		status |= MovieProcessor::ExportMovieToFolder(movie_table, video_folder_path) << 1;
+		if (~status & 2)
+			fs::remove_all(video_folder_path);
 	}
 		
 	if (string_table.size())
 	{
 		CreateDirectoryA(text_folder_path.c_str(), NULL);
-		StringProcessor::ExportTextToFolder(string_table, text_folder_path);
+		status |= StringProcessor::ExportTextToFolder(string_table, text_folder_path) << 2;
+		if (~status & 4)
+			fs::remove_all(text_folder_path);
 	}
 
 	if (texture_table.size())
 	{
 		CreateDirectoryA(texture_folder_path.c_str(), NULL);
-		TextureProcessor::ExtractTextureToFolder(texture_table, texture_folder_path);
+		status |= TextureProcessor::ExtractTextureToFolder(texture_table, texture_folder_path) << 3;
+		if (~status & 8)
+			fs::remove_all(texture_folder_path);
 	}
 
 	if (model_table.size())
 	{
-		ModelProcessor::ExportModelToFile(model_table, "hui");
+		ModelProcessor::ExportModelToFile(model_table, "dick");
 	}
 
 	if (unknown_table.size())
 	{
 		CreateDirectoryA(unknown_folder_path.c_str(), NULL);
+		bool has_written = false;
+
 		for (auto& entry_index : unknown_table)
 		{
 			auto& entry = entry_table[entry_index];
@@ -110,19 +125,52 @@ bool Package::ExportDataTables(const std::string& output_folder_path)
 			FILE* unknown_file = fopen(file_name.c_str(), "wb");
 
 			fwrite(file_raw_data, file_size, 1, unknown_file);
+			has_written = true;
 
 			fclose(unknown_file);
 			delete[] file_raw_data;
 		}
+
+		status |= has_written << 5;
+		if (~status & 32)
+			fs::remove_all(unknown_folder_path);
 	}
 
-	std::cout << "EntryTable Size: " << entry_table.size() << std::endl;
+	if (status)
+		std::cout << this->package_path << " --- Has been exported!" << std::endl;
+	else
+		fs::remove_all(output_folder_path);
 
 	return true;
 }
 
-bool Package::ExtractEntryByReference(unsigned reference, unsigned char* out_buffer)
+std::optional<Entry> Package::GetEntryByReference(unsigned reference)
 {
+	if (reference == 0xFFFFFFFF)
+		return std::nullopt;
+
+	unsigned ref_id = reference & 0x1FFF;
+	unsigned package_ref_id = (reference >> 13) & 0x3FF;
+
+	std::string ref_package_path = this->package_path;
+	ref_package_path.replace(ref_package_path.end() - 9, ref_package_path.end() - 6, helpers::to_hex(package_ref_id));
+
+	if (ref_package_path == this->package_path)
+		return entry_table[ref_id];
+
+	FILE* ref_package_file = fopen(ref_package_path.c_str(), "rb");
+	if (!ref_package_file)
+		return std::nullopt;
+
+	Package ref_package(ref_package_file, ref_package_path);
+	fclose(ref_package_file);
+
+	return ref_package.entry_table[ref_id];
+}
+
+bool Package::ExtractEntryByReference(unsigned reference, unsigned char* out_buffer, unsigned& file_size)
+{
+	file_size = 0;
 	if (reference == 0xFFFFFFFF) return false;
 
 	Entry temp_entry{}; temp_entry.A = reference;
@@ -130,14 +178,18 @@ bool Package::ExtractEntryByReference(unsigned reference, unsigned char* out_buf
 	std::string ref_package_path = this->package_path;
 	ref_package_path.replace(ref_package_path.end() - 9, ref_package_path.end() - 6, helpers::to_hex(temp_entry.GetPackageRefID()));
 
+	if (ref_package_path == this->package_path)
+		return ExtractEntry(entry_table[temp_entry.GetRefID()], out_buffer, true);
+
 	FILE* ref_package_file = fopen(ref_package_path.c_str(), "rb");
 	if (!ref_package_file) return false;
 
 	Package ref_package(ref_package_file, ref_package_path);
 
 	Entry ref_entry = ref_package.entry_table[temp_entry.GetRefID()];
-
+	
 	bool result = ref_package.ExtractEntry(ref_entry, out_buffer, true);
+	if(result) file_size = ref_entry.GetFileSize();
 
 	fclose(ref_package_file);
 
@@ -146,6 +198,7 @@ bool Package::ExtractEntryByReference(unsigned reference, unsigned char* out_buf
 
 bool Package::ExtractEntry(const Entry& entry, unsigned char* out_buffer, bool force)
 {
+	unsigned test = entry.GetStartingBlockOffset();
 	unsigned current_block_id = entry.GetStartingBlock();
 	unsigned buffer_offset = 0;
 	unsigned file_size = entry.GetFileSize();
@@ -194,7 +247,7 @@ bool Package::ExtractEntry(const Entry& entry, unsigned char* out_buffer, bool f
 		delete[] decomp_buffer;
 	}
 
-	return true; // force || entry_in_current_patch;
+	return force || entry_in_current_patch;
 }
 
 const std::vector<Entry>& Package::GetEntryTable()
@@ -205,15 +258,4 @@ const std::vector<Entry>& Package::GetEntryTable()
 const std::vector<Block>& Package::GetBlockTable()
 {
 	return block_table;
-}
-
-Entry* Package::GetEntryByHash(unsigned hash)
-{
-	if (hash == 0xFFFFFFFF)
-		return nullptr;
-
-	size_t entry_index = (hash & 0x1FFF);
-	size_t ref_entry_index = entry_table[entry_index].GetRefID();
-
-	return &entry_table[entry_index];
 }

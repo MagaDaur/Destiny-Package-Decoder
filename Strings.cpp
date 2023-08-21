@@ -41,7 +41,7 @@ bool is_ru_string(unsigned char* str, uint64_t size)
 bool StringProcessor::ExportTextToFolder(const std::vector<size_t>& string_table, const std::string& output_folder_path)
 {
 	auto& entry_table = g_pPackage->GetEntryTable();
-
+	bool has_ru = false;
 
 	for (auto& entry_index : string_table)
 	{
@@ -49,6 +49,7 @@ bool StringProcessor::ExportTextToFolder(const std::vector<size_t>& string_table
 		const std::string file_name = helpers::entry_file_name(entry, entry_index);
 		auto file_size = entry.GetFileSize();
 		unsigned char* raw_data_buffer = new (unsigned char[file_size]);
+
 
 		if (!g_pPackage->ExtractEntry(entry, raw_data_buffer))
 		{
@@ -67,7 +68,7 @@ bool StringProcessor::ExportTextToFolder(const std::vector<size_t>& string_table
 
 				FILE* output_file = fopen(txt_file_path.c_str(), "wb");
 
-				bool has_ru = false;
+				has_ru = false;
 
 				for (unsigned int i = 0; i < header->array_size; i++)
 				{
@@ -94,5 +95,5 @@ bool StringProcessor::ExportTextToFolder(const std::vector<size_t>& string_table
 	}
 
 
-	return true;
+	return has_ru;
 }

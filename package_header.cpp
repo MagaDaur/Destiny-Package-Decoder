@@ -10,13 +10,14 @@ std::ostream& operator<<(std::ostream& out, const PackageHeader& pkg)
 	out << "Block Table Size: " << std::dec << pkg.block_table_size << std::endl;
 	return out;
 }
-
+ 
 PackageHeader::PackageHeader(FILE* package)
 {
 	fseek(package, 0, SEEK_SET);
 	fread(raw_data, sizeof(char), package_header_size, package);
 
 	package_id = *(unsigned short*)&raw_data[0x10];
+	unk = *(unsigned int*)&raw_data[0x28];
 	patch_id = *(unsigned short*)&raw_data[0x30];
 
 	entry_table_offset = *(unsigned int*)&raw_data[0x44];

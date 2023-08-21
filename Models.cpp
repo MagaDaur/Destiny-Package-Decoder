@@ -29,17 +29,17 @@ bool Model::SetupMesh()
 	
 	Destiny_Mesh* mesh = (Destiny_Mesh*)(info_raw_data + seek);
 
-	auto vertex_buffer_entry = g_pPackage->GetEntryByHash(mesh->vb_pos_hash);
-	auto index_buffer_entry = g_pPackage->GetEntryByHash(mesh->ib_hash);
+	//auto vertex_buffer_entry = g_pPackage->GetEntryByHash(mesh->vb_pos_hash);
+	//auto index_buffer_entry = g_pPackage->GetEntryByHash(mesh->ib_hash);
 
-	if (!vertex_buffer_entry || !index_buffer_entry)
-		return false;
+	//if (!vertex_buffer_entry || !index_buffer_entry)
+	//	return false;
 
-	Entry vertex_header_entry = entry_table[vertex_buffer_entry->GetRefID()];
-	Entry index_header_entry = entry_table[index_buffer_entry->GetRefID()];
+	//Entry vertex_header_entry = entry_table[vertex_buffer_entry->GetRefID()];
+	//Entry index_header_entry = entry_table[index_buffer_entry->GetRefID()];
 
-	VertexBuffer vertex_buffer(vertex_header_entry);
-	IndexBuffer index_buffer(index_header_entry);
+	//VertexBuffer vertex_buffer(vertex_header_entry);
+	//IndexBuffer index_buffer(index_header_entry);
 
 	uint64_t part_seek = seek + 0x28 + mesh->parts_list_offset + sizeof(Destiny_ArrayInfo);
 	this->part_table.reserve(mesh->parts_list_count);

@@ -13,11 +13,13 @@ public:
 	PackageHeader(FILE* package);
 
 	friend std::ostream& operator<<(std::ostream&, const PackageHeader&);
-protected:
+
 	unsigned char raw_data[package_header_size];
 
 	unsigned short package_id;
 	unsigned short patch_id;
+
+	unsigned int unk;
 
 	unsigned int   entry_table_offset;
 	unsigned int   entry_size;

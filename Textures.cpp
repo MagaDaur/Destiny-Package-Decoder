@@ -178,11 +178,11 @@ ScratchImage DecompressImage(const ScratchImage& image, DXGI_FORMAT format)
 	return ret;
 }
 
-ScratchImage RotateImage(const ScratchImage& sc_image, int image_index, TEX_FR_FLAGS flags)
+Image RotateImage(const Image* image, TEX_FR_FLAGS flags)
 {
 	ScratchImage ret;
-	FlipRotate(*sc_image.GetImage(0, image_index, 0), flags, ret);
-	return ret;
+	auto hr = FlipRotate(*image, flags, ret); // doesnt work on x64
+	return *ret.GetImage(0, 0, 0);
 }
 
 bool TextureProcessor::ExtractTextureToFolder(const std::vector<size_t>& texture_table, const std::string& folder_path)
@@ -190,6 +190,8 @@ bool TextureProcessor::ExtractTextureToFolder(const std::vector<size_t>& texture
 	const std::wstring folder_path_w = std::wstring(folder_path.begin(), folder_path.end());
 
     auto& entry_table = g_pPackage->GetEntryTable();
+
+	bool has_written = false;
     for (auto& entry_index : texture_table)
     {
         auto& header_entry = entry_table[entry_index];
@@ -210,23 +212,22 @@ bool TextureProcessor::ExtractTextureToFolder(const std::vector<size_t>& texture
 		if (texture_header.depth != 1)
 			continue;
 
+		unsigned int buffer_offset = 0;
 		unsigned int writted_bytes = 0;
         unsigned int texture_file_size = DDS_HEADER_SIZE + texture_header.size;
         unsigned char* raw_texture_data = new (unsigned char[texture_file_size]);
 
 		GenerateDDSHeader(&texture_header, raw_texture_data, writted_bytes);
 
-		const Entry* texture_raw_entry = &entry_table[header_entry.GetRefID()];
-		unsigned int buffer_offset = 0;
-
-		if (g_pPackage->ExtractEntryByReference(texture_header.buffer_ref, raw_texture_data + writted_bytes))
-			buffer_offset = (texture_header.size - texture_raw_entry->GetFileSize());
-
-		if (!g_pPackage->ExtractEntry(*texture_raw_entry, raw_texture_data + writted_bytes + buffer_offset, true))
+		if (!g_pPackage->ExtractEntryByReference(texture_header.buffer_ref, raw_texture_data + writted_bytes, buffer_offset))
 		{
-			delete[] raw_texture_data;
-			continue;
+			if (!g_pPackage->ExtractEntryByReference(header_entry.A, raw_texture_data + writted_bytes, buffer_offset))
+			{
+				delete[] raw_texture_data;
+				continue;
+			}
 		}
+
 
 		auto format = (DXGI_FORMAT)texture_header.format;
 		ScratchImage image;
@@ -238,18 +239,42 @@ bool TextureProcessor::ExtractTextureToFolder(const std::vector<size_t>& texture
 		delete[] raw_texture_data;
 
 		if (IsCompressed(format))
-			image = DecompressImage(image, DXGI_FORMAT_R8G8B8A8_UNORM_SRGB);
+			image = DecompressImage(image, DXGI_FORMAT_R8G8B8A8_UNORM);
 
-		SaveToDDSFile(image.GetImages(), image.GetImageCount(), image.GetMetadata(), DDS_FLAGS_NONE, file_path_w.c_str());
-
-		if (texture_header.array_size == 1)
+		if (1 != 1) // yeaaah
 		{
-			const std::wstring texconv_command = L"external\\texconv\\texconv.exe " + file_path_w + L" -ft PNG -f R8G8B8A8_UNORM_SRGB -y -o " + folder_path_w;
-			_wsystem(texconv_command.c_str());
-			DeleteFileA(file_path.c_str());
+			Image rotated_images[6]{};
+
+			rotated_images[0] = RotateImage(image.GetImage(0, 0, 0), TEX_FR_ROTATE90);
+			rotated_images[1] = RotateImage(image.GetImage(0, 1, 0), TEX_FR_ROTATE270);
+
+			rotated_images[2] = RotateImage(image.GetImage(0, 2, 0), TEX_FR_FLIP_VERTICAL);
+			rotated_images[2] = RotateImage(&rotated_images[2], TEX_FR_FLIP_HORIZONTAL);
+
+			rotated_images[3] = *image.GetImage(0, 3, 0);
+
+			rotated_images[4] = RotateImage(image.GetImage(0, 4, 0), TEX_FR_FLIP_VERTICAL);
+			rotated_images[4] = RotateImage(&rotated_images[4], TEX_FR_FLIP_HORIZONTAL);
+
+			rotated_images[5] = *image.GetImage(0, 5, 0);
+
+			ScratchImage rotated; rotated.InitializeCubeFromImages(rotated_images, 6);
+		}
+
+		auto hr = SaveToDDSFile(image.GetImages(), image.GetImageCount(), image.GetMetadata(), DDS_FLAGS_NONE, file_path_w.c_str());
+
+		if (hr == S_OK)
+		{
+			has_written = true;
+			if (texture_header.array_size == 1)
+			{
+				const std::wstring texconv_command = L"external\\texconv\\texconv.exe " + file_path_w + L" -ft PNG -f R8G8B8A8_UNORM_SRGB -y -o " + folder_path_w;
+				_wsystem(texconv_command.c_str());
+				DeleteFileA(file_path.c_str());
+			}
 		}
 
     }
 
-    return true;
+    return has_written;
 }

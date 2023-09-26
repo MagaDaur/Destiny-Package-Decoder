@@ -25,7 +25,7 @@ bool Model::SetupMesh()
 {
 	auto& entry_table = g_pPackage->GetEntryTable();
 
-	uint64_t seek = 0x18 + model_info->mesh_list_offset + sizeof(Destiny_ArrayInfo);
+	uint64_t seek = 0x18 + model_info->mesh_list_offset + sizeof(Struct_b89f8080);
 	
 	Destiny_Mesh* mesh = (Destiny_Mesh*)(info_raw_data + seek);
 
@@ -41,7 +41,7 @@ bool Model::SetupMesh()
 	//VertexBuffer vertex_buffer(vertex_header_entry);
 	//IndexBuffer index_buffer(index_header_entry);
 
-	uint64_t part_seek = seek + 0x28 + mesh->parts_list_offset + sizeof(Destiny_ArrayInfo);
+	uint64_t part_seek = seek + 0x28 + mesh->parts_list_offset + sizeof(Struct_b89f8080);
 	this->part_table.reserve(mesh->parts_list_count);
 
 	for (int j = 0; j < mesh->parts_list_count; j++)

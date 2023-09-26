@@ -1,6 +1,163 @@
 #include "Textures.h"
 #include "helpers.h"
 
+bool SetPixelFormat(DDS_HEADER& header, DXGI_FORMAT format);
+
+bool TextureProcessor::GenerateDDSHeader(const TextureHeader* texture_header, unsigned char* out_buffer, unsigned int& bytes_written)
+{
+	DDS_HEADER header = { };
+
+	header.width = texture_header->width;
+	header.height = texture_header->height;
+	header.depth = 1;
+
+	header.size = sizeof(DDS_HEADER);
+	header.flags = DDS_HEADER_FLAGS_TEXTURE | DDS_HEADER_FLAGS_MIPMAP;
+	header.caps = DDS_SURFACE_FLAGS_TEXTURE;
+	header.mipMapCount = 1;
+
+	DDS_HEADER_DXT10 header10 = { };
+
+	header10.dxgiFormat = (DXGI_FORMAT)texture_header->format;
+	header10.arraySize = texture_header->array_size;
+	header10.resourceDimension = 3;
+	header10.miscFlag = 0;
+	header10.reserved = 0;
+
+	if (header10.arraySize % 6 == 0)
+	{
+		header10.miscFlag |= TEX_MISC_TEXTURECUBE;
+		header10.arraySize /= 6;
+	}
+
+	bool is_dx10 = SetPixelFormat(header, header10.dxgiFormat);
+
+	size_t row_pitch = 0, slice_pitch = 0;
+	ComputePitch(header10.dxgiFormat, header.width, header.height, row_pitch, slice_pitch);
+
+	if (IsCompressed(header10.dxgiFormat))
+	{
+		header.flags |= DDS_HEADER_FLAGS_LINEARSIZE;
+		header.pitchOrLinearSize = slice_pitch;
+	}
+	else
+	{
+		header.flags |= DDS_HEADER_FLAGS_PITCH;
+		header.pitchOrLinearSize = row_pitch;
+	}
+
+	memcpy(out_buffer, &DDS_MAGIC, 4);
+	memcpy(out_buffer + 4, &header, header.size);
+
+	bytes_written = 4 + header.size;
+
+	if (is_dx10)
+	{
+		memcpy(out_buffer + 4 + header.size, &header10, sizeof(DDS_HEADER_DXT10));
+		bytes_written += sizeof(DDS_HEADER_DXT10);
+	}
+
+	return true;
+}
+
+ScratchImage DecompressImage(const ScratchImage& image, DXGI_FORMAT format)
+{
+	ScratchImage ret;
+	Decompress(image.GetImages(), image.GetImageCount(), image.GetMetadata(), format, ret);
+	return ret;
+}
+
+Image RotateImage(Image image, TEX_FR_FLAGS flags)
+{
+	ScratchImage ret;
+	auto hr = FlipRotate(image, flags, ret); // doesnt work on x64
+	return ret.GetImages()[0];
+}
+
+bool TextureProcessor::ExtractTextureToFolder(const std::vector<size_t>& texture_table, const std::string& folder_path)
+{
+	const std::wstring folder_path_w = std::wstring(folder_path.begin(), folder_path.end());
+
+    auto& entry_table = g_pPackage->GetEntryTable();
+
+	bool has_written = false;
+    for (auto& entry_index : texture_table)
+    {
+        auto& header_entry = entry_table[entry_index];
+        auto header_file_size = header_entry.GetFileSize();
+        auto file_path = folder_path + helpers::entry_file_name(header_entry, entry_index);
+		auto file_path_w = std::wstring(file_path.begin(), file_path.end()) + L".dds";
+
+        unsigned char* header_raw_data = new (unsigned char[header_file_size]);
+        if (!g_pPackage->ExtractEntry(header_entry, header_raw_data))
+        {
+            delete[] header_raw_data;
+            continue;
+        }
+
+        auto texture_header = *(TextureHeader*)header_raw_data;
+		delete[] header_raw_data;
+
+		if (texture_header.depth != 1)
+			continue;
+
+		unsigned int header_bytes = 0;
+        unsigned int texture_file_size = DDS_HEADER_SIZE + texture_header.size;
+        unsigned char* raw_texture_data = new (unsigned char[texture_file_size]);
+
+		GenerateDDSHeader(&texture_header, raw_texture_data, header_bytes);
+
+		if (texture_header.buffer_ref.valid() && !g_pPackage->ExtractEntryByReference(texture_header.buffer_ref, raw_texture_data + header_bytes))
+		{
+			delete[] raw_texture_data;
+			continue;
+		}
+		else if (!g_pPackage->ExtractEntryByReference(header_entry.A, raw_texture_data + header_bytes))
+		{
+			delete[] raw_texture_data;
+			continue;
+		}
+
+
+		auto format = (DXGI_FORMAT)texture_header.format;
+		ScratchImage image;
+		TexMetadata info;
+		
+		texture_file_size = header_bytes + texture_header.size;
+
+		HRESULT check = LoadFromDDSMemory(raw_texture_data, texture_file_size, DDS_FLAGS_NONE, &info, image);
+		if (FAILED(check))
+		{
+			int x = 0;
+		}
+		delete[] raw_texture_data;
+
+		if (IsCompressed(format))
+			image = DecompressImage(image, DXGI_FORMAT_R8G8B8A8_UNORM_SRGB);
+
+		has_written |= SaveToDDSFile(image.GetImages(), image.GetImageCount(), image.GetMetadata(), DDS_FLAGS_NONE, file_path_w.c_str()) == S_OK;
+
+		if (info.arraySize == 1)
+		{
+			const std::wstring texconv_command = L"external\\texconv\\texconv.exe \"" + file_path_w + L"\" -ft PNG -srgb -nowic -o \"" + folder_path_w + L"\"";
+			_wsystem(texconv_command.c_str());
+
+			DeleteFileW(file_path_w.c_str());
+		}
+		else
+		{
+			for (int i = 0; i < info.arraySize; i++)
+			{
+
+			}
+		}
+
+
+    }
+
+    return has_written;
+}
+
 uint MakePixelFormatFourCC(char char1, char char2, char char3, char char4)
 {
 	return (char1) | (char2 << 8) | (char3 << 16) | (char4 << 24);
@@ -112,169 +269,4 @@ bool SetPixelFormat(DDS_HEADER& header, DXGI_FORMAT format)
 		break;
 	}
 	return false;
-}
-
-bool TextureProcessor::GenerateDDSHeader(const TextureHeader* texture_header, unsigned char* out_buffer, unsigned int& bytes_written)
-{
-	DDS_HEADER header = { };
-
-	header.width = texture_header->width;
-	header.height = texture_header->height;
-	header.depth = 1;
-
-	header.size = sizeof(DDS_HEADER);
-	header.flags = DDS_HEADER_FLAGS_TEXTURE | DDS_HEADER_FLAGS_MIPMAP;
-	header.caps = DDS_SURFACE_FLAGS_TEXTURE;
-	header.mipMapCount = 1;
-
-	DDS_HEADER_DXT10 header10 = { };
-
-	header10.dxgiFormat = (DXGI_FORMAT)texture_header->format;
-	header10.arraySize = texture_header->array_size;
-	header10.resourceDimension = 3;
-	header10.miscFlag = 0;
-	header10.reserved = 0;
-
-	if (header10.arraySize % 6 == 0)
-	{
-		header10.miscFlag |= TEX_MISC_TEXTURECUBE;
-		header10.arraySize /= 6;
-	}
-
-	bool is_dx10 = SetPixelFormat(header, header10.dxgiFormat);
-
-	size_t row_pitch = 0, slice_pitch = 0;
-	ComputePitch(header10.dxgiFormat, header.width, header.height, row_pitch, slice_pitch);
-
-	if (IsCompressed(header10.dxgiFormat))
-	{
-		header.flags |= DDS_HEADER_FLAGS_LINEARSIZE;
-		header.pitchOrLinearSize = slice_pitch;
-	}
-	else
-	{
-		header.flags |= DDS_HEADER_FLAGS_PITCH;
-		header.pitchOrLinearSize = row_pitch;
-	}
-
-	memcpy(out_buffer, &DDS_MAGIC, 4);
-	memcpy(out_buffer + 4, &header, header.size);
-
-	bytes_written = 4 + header.size;
-
-	if (is_dx10)
-	{
-		memcpy(out_buffer + 4 + header.size, &header10, sizeof(DDS_HEADER_DXT10));
-		bytes_written += sizeof(DDS_HEADER_DXT10);
-	}
-
-	return true;
-}
-
-ScratchImage DecompressImage(const ScratchImage& image, DXGI_FORMAT format)
-{
-	ScratchImage ret;
-	Decompress(image.GetImages(), image.GetImageCount(), image.GetMetadata(), format, ret);
-	return ret;
-}
-
-Image RotateImage(const Image* image, TEX_FR_FLAGS flags)
-{
-	ScratchImage ret;
-	auto hr = FlipRotate(*image, flags, ret); // doesnt work on x64
-	return *ret.GetImage(0, 0, 0);
-}
-
-bool TextureProcessor::ExtractTextureToFolder(const std::vector<size_t>& texture_table, const std::string& folder_path)
-{
-	const std::wstring folder_path_w = std::wstring(folder_path.begin(), folder_path.end());
-
-    auto& entry_table = g_pPackage->GetEntryTable();
-
-	bool has_written = false;
-    for (auto& entry_index : texture_table)
-    {
-        auto& header_entry = entry_table[entry_index];
-        auto header_file_size = header_entry.GetFileSize();
-        auto file_path = folder_path + helpers::entry_file_name(header_entry, entry_index) + ".dds";
-		auto file_path_w = std::wstring(file_path.begin(), file_path.end());
-
-        unsigned char* header_raw_data = new (unsigned char[header_file_size]);
-        if (!g_pPackage->ExtractEntry(header_entry, header_raw_data))
-        {
-            delete[] header_raw_data;
-            continue;
-        }
-
-        auto texture_header = *(TextureHeader*)header_raw_data;
-		delete[] header_raw_data;
-
-		if (texture_header.depth != 1)
-			continue;
-
-		unsigned int buffer_offset = 0;
-		unsigned int writted_bytes = 0;
-        unsigned int texture_file_size = DDS_HEADER_SIZE + texture_header.size;
-        unsigned char* raw_texture_data = new (unsigned char[texture_file_size]);
-
-		GenerateDDSHeader(&texture_header, raw_texture_data, writted_bytes);
-
-		if (!g_pPackage->ExtractEntryByReference(texture_header.buffer_ref, raw_texture_data + writted_bytes, buffer_offset))
-		{
-			if (!g_pPackage->ExtractEntryByReference(header_entry.A, raw_texture_data + writted_bytes, buffer_offset))
-			{
-				delete[] raw_texture_data;
-				continue;
-			}
-		}
-
-
-		auto format = (DXGI_FORMAT)texture_header.format;
-		ScratchImage image;
-		TexMetadata info;
-		
-		texture_file_size = writted_bytes + texture_header.size;
-
-		LoadFromDDSMemory(raw_texture_data, texture_file_size, DDS_FLAGS_NONE, &info, image);
-		delete[] raw_texture_data;
-
-		if (IsCompressed(format))
-			image = DecompressImage(image, DXGI_FORMAT_R8G8B8A8_UNORM);
-
-		if (1 != 1) // yeaaah
-		{
-			Image rotated_images[6]{};
-
-			rotated_images[0] = RotateImage(image.GetImage(0, 0, 0), TEX_FR_ROTATE90);
-			rotated_images[1] = RotateImage(image.GetImage(0, 1, 0), TEX_FR_ROTATE270);
-
-			rotated_images[2] = RotateImage(image.GetImage(0, 2, 0), TEX_FR_FLIP_VERTICAL);
-			rotated_images[2] = RotateImage(&rotated_images[2], TEX_FR_FLIP_HORIZONTAL);
-
-			rotated_images[3] = *image.GetImage(0, 3, 0);
-
-			rotated_images[4] = RotateImage(image.GetImage(0, 4, 0), TEX_FR_FLIP_VERTICAL);
-			rotated_images[4] = RotateImage(&rotated_images[4], TEX_FR_FLIP_HORIZONTAL);
-
-			rotated_images[5] = *image.GetImage(0, 5, 0);
-
-			ScratchImage rotated; rotated.InitializeCubeFromImages(rotated_images, 6);
-		}
-
-		auto hr = SaveToDDSFile(image.GetImages(), image.GetImageCount(), image.GetMetadata(), DDS_FLAGS_NONE, file_path_w.c_str());
-
-		if (hr == S_OK)
-		{
-			has_written = true;
-			if (texture_header.array_size == 1)
-			{
-				const std::wstring texconv_command = L"external\\texconv\\texconv.exe " + file_path_w + L" -ft PNG -f R8G8B8A8_UNORM_SRGB -y -o " + folder_path_w;
-				_wsystem(texconv_command.c_str());
-				DeleteFileA(file_path.c_str());
-			}
-		}
-
-    }
-
-    return has_written;
 }

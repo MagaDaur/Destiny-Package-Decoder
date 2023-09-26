@@ -24,3 +24,17 @@ struct Destiny_StringData // string data
 	uint64_t unk2; // 0x18
 };
 
+
+struct D2Class_80809212
+{
+	uint64_t filesize;
+	
+	uint64_t unk_count;
+	uint64_t unk_offset; // 0x10
+};
+
+struct D2Class_80809214
+{
+	uint64_t unk;
+
+};

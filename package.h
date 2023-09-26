@@ -5,25 +5,31 @@
 #include "package_header.h"
 #include "package_block.h"
 #include "package_entry.h"
-#include <optional>
+#include "global_structs.h"
+#include <array>
+#include <map>
+#include <vector>
 
 class Package
 {
 public:
-	Package(FILE*, const std::string&);
+	Package() : header() {};
+	Package(const std::string&);
 
 	const std::vector<Entry>& GetEntryTable();
 	const std::vector<Block>& GetBlockTable();
 
-	bool ExtractEntry(const Entry&, unsigned char*, bool force = false);
-	bool ExtractEntryByReference(unsigned, unsigned char*, unsigned&);
-
-	std::optional<Entry> GetEntryByReference(unsigned);
+	bool ExtractEntry(const Entry&, unsigned char*);
+	bool ExtractEntryByReference(Hash_Reference, unsigned char*);
 
 	bool SetupDataTables();
 	bool ExportDataTables(const std::string&);
 
-private:
+	FILE* GetFile();
+
+	bool valid() { return header.timestamp >= 0; };
+
+//private:
 	unsigned char nonce[12] = { 0x84, 0xEA, 0x11, 0xC0, 0xAC, 0xAB, 0xFA, 0x20, 0x33, 0x11, 0x26, 0x99 };
 
 	std::vector<Entry> entry_table;
@@ -38,6 +44,11 @@ private:
 	std::vector<size_t> unknown_table;
 
 	std::string package_path;
+
+public:
+	PackageHeader header;
+	inline static std::map<uint32_t, Package> package_table;
+	static Package* GetPackage(unsigned, int);
 };
 
 extern Package* g_pPackage;

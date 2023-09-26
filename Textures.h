@@ -68,7 +68,7 @@ struct TextureHeader
 	uint16_t array_size; // 0x28
 	uint16_t miplevels; // 0x2A
 	uint8_t pad2[0x10]; // 0x2C
-	uint32_t buffer_ref;
+	Hash_Reference buffer_ref;
 };
 
 struct DDS_PIXELFORMAT

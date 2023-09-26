@@ -1,6 +1,13 @@
-﻿#include "Strings.h"
+﻿#define _CRT_SECURE_NO_WARNINGS
+
+#include "Strings.h"
+
 #include "helpers.h"
 #include "string_structs.h"
+
+#include <Windows.h>
+
+#include "package.h"
 
 uintptr_t get_offset(void* from, void* to)
 {
@@ -62,7 +69,7 @@ bool StringProcessor::ExportTextToFolder(const std::vector<size_t>& string_table
 			if (entry.A == 0x808099F1)
 			{
 				Destiny_StringArray* header = (Destiny_StringArray*)raw_data_buffer;
-				uint64_t seek = 0x10 + header->array_offset + sizeof(Destiny_ArrayInfo);
+				uint64_t seek = 0x10 + header->array_offset + sizeof(Struct_b89f8080);
 
 				const std::string txt_file_path = output_folder_path + file_name + ".txt";
 

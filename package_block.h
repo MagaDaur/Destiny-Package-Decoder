@@ -1,8 +1,6 @@
 #pragma once
-#include "package_header.h"
-#include "package_entry.h"
-#include <vector>
-#include <Windows.h>
+
+#include <cstdio>
 
 struct Block
 {
@@ -13,11 +11,9 @@ struct Block
 	unsigned char pad[0x14]; // 0xC
 	unsigned char tag[0x10]; // 0x20
 
-	FILE* GetPatchFile(std::string) const;
+	FILE* GetPatchFile(unsigned) const;
 	bool Decrypt(unsigned char*, unsigned char*, unsigned char*) const;
 	bool Decomp(unsigned char*, unsigned char*) const;
-
-	friend std::ostream& operator<<(std::ostream&, const Block&);
 
 	static const unsigned MAX_SIZE = 0x40000;
 };

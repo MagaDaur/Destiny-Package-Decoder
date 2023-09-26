@@ -12,9 +12,9 @@
 #include <filesystem>
 namespace fs = std::filesystem;
 
-Package::Package(FILE* package, const std::string& package_path)
+Package::Package(const std::string& package_path) : header(package_path)
 {
-	PackageHeader header(package);
+	FILE* package_file = fopen(package_path.c_str(), "rb");
 
 	nonce[0] ^= (header.package_id >> 8) & 0xFF;
 	nonce[11] ^= header.package_id & 0xFF;
@@ -22,14 +22,21 @@ Package::Package(FILE* package, const std::string& package_path)
 	this->package_path = package_path;
 
 	entry_table.resize(header.entry_size);
-	fseek(package, header.entry_table_offset, SEEK_SET);
+	fseek(package_file, header.entry_table_offset, SEEK_SET);
 	for (unsigned i = 0; i < header.entry_size; i++)
-		fread(&entry_table[i], sizeof(Entry), 1, package);
+		fread(&entry_table[i], sizeof(Entry), 1, package_file);
 
 	block_table.resize(header.block_table_size);
-	fseek(package, header.block_table_offset, SEEK_SET);
+	fseek(package_file, header.block_table_offset, SEEK_SET);
 	for (unsigned i = 0; i < header.block_table_size; i++)
-		fread(&block_table[i], sizeof(Block), 1, package);
+		fread(&block_table[i], sizeof(Block), 1, package_file);
+
+	fclose(package_file);
+}
+
+FILE* Package::GetFile()
+{
+	return fopen(package_path.c_str(), "rb");
 }
 
 bool Package::SetupDataTables()
@@ -42,16 +49,16 @@ bool Package::SetupDataTables()
 			unknown_table.push_back(i);
 		else if (entry.GetType() == 26 && entry.GetSubType() == 7)
 			audio_table.push_back(i);
-		else if (entry.GetType() == 27 && entry.GetSubType() == 1)
-			movie_table.push_back(i);
+		//else if (entry.GetType() == 27 && entry.GetSubType() == 1)
+			//movie_table.push_back(i);
 		else if (entry.GetType() == 32 && entry.GetSubType() >= 1 && entry.GetSubType() <= 3)
 			texture_table.push_back(i);
 		else if (entry.GetType() == 8 && entry.GetSubType() == 0 && entry.A == 0x808099F1)
 			string_table.push_back(i);
 		//else if (entry.GetType() == 8 && entry.GetSubType() == 0 && entry.A == 0x80806F07)
 			//model_table.push_back(i);
-		//else
-			//unknown_table.push_back(i);
+		else
+			unknown_table.push_back(i);
 	}
 
 	return true;
@@ -104,150 +111,119 @@ bool Package::ExportDataTables(const std::string& output_folder_path)
 		ModelProcessor::ExportModelToFile(model_table, "dick");
 	}
 
-	if (unknown_table.size())
+	if (1 != 1)//(unknown_table.size())
 	{
 		CreateDirectoryA(unknown_folder_path.c_str(), NULL);
 		bool has_written = false;
-
 		for (auto& entry_index : unknown_table)
 		{
 			auto& entry = entry_table[entry_index];
 			auto file_name = unknown_folder_path + helpers::entry_file_name(entry, entry_index) + "_" + helpers::to_hex(entry.A) + ".bin";
 			auto file_size = entry.GetFileSize();
-
 			unsigned char* file_raw_data = new (unsigned char[file_size]);
 			if (!ExtractEntry(entry, file_raw_data))
 			{
 				delete[] file_raw_data;
 				continue;
 			}
-
 			FILE* unknown_file = fopen(file_name.c_str(), "wb");
-
 			fwrite(file_raw_data, file_size, 1, unknown_file);
 			has_written = true;
-
 			fclose(unknown_file);
 			delete[] file_raw_data;
 		}
-
 		status |= has_written << 5;
 		if (~status & 32)
 			fs::remove_all(unknown_folder_path);
 	}
 
-	if (status)
-		std::cout << this->package_path << " --- Has been exported!" << std::endl;
-	else
+	if (!status)
 		fs::remove_all(output_folder_path);
 
-	return true;
+	return status;
 }
 
-std::optional<Entry> Package::GetEntryByReference(unsigned reference)
+Package* Package::GetPackage(unsigned package_id, int patch_id)
 {
-	if (reference == 0xFFFFFFFF)
-		return std::nullopt;
-
-	unsigned ref_id = reference & 0x1FFF;
-	unsigned package_ref_id = (reference >> 13) & 0x3FF;
-
-	std::string ref_package_path = this->package_path;
-	ref_package_path.replace(ref_package_path.end() - 9, ref_package_path.end() - 6, helpers::to_hex(package_ref_id));
-
-	if (ref_package_path == this->package_path)
-		return entry_table[ref_id];
-
-	FILE* ref_package_file = fopen(ref_package_path.c_str(), "rb");
-	if (!ref_package_file)
-		return std::nullopt;
-
-	Package ref_package(ref_package_file, ref_package_path);
-	fclose(ref_package_file);
-
-	return ref_package.entry_table[ref_id];
+	if (patch_id == -1)
+	{
+		patch_id = 10;
+		while (package_table.count(package_id | (patch_id << 20)) == 0 && patch_id >= 0)
+			patch_id--;
+		if (patch_id < 0) return nullptr;
+	}
+	return &package_table[package_id | (patch_id << 20)];
 }
 
-bool Package::ExtractEntryByReference(unsigned reference, unsigned char* out_buffer, unsigned& file_size)
+bool Package::ExtractEntryByReference(Hash_Reference reference, unsigned char* out_buffer)
 {
-	file_size = 0;
-	if (reference == 0xFFFFFFFF) return false;
+	Package* ref_package = GetPackage(reference.get_package_id(), -1);
+	if (!ref_package) return false;
+	Entry ref_entry = ref_package->entry_table[reference.get_entry_id()];
 
-	Entry temp_entry{}; temp_entry.A = reference;
-
-	std::string ref_package_path = this->package_path;
-	ref_package_path.replace(ref_package_path.end() - 9, ref_package_path.end() - 6, helpers::to_hex(temp_entry.GetPackageRefID()));
-
-	if (ref_package_path == this->package_path)
-		return ExtractEntry(entry_table[temp_entry.GetRefID()], out_buffer, true);
-
-	FILE* ref_package_file = fopen(ref_package_path.c_str(), "rb");
-	if (!ref_package_file) return false;
-
-	Package ref_package(ref_package_file, ref_package_path);
-
-	Entry ref_entry = ref_package.entry_table[temp_entry.GetRefID()];
-	
-	bool result = ref_package.ExtractEntry(ref_entry, out_buffer, true);
-	if(result) file_size = ref_entry.GetFileSize();
-
-	fclose(ref_package_file);
-
-	return result;
+	return ref_package->ExtractEntry(ref_entry, out_buffer);
 }
 
-bool Package::ExtractEntry(const Entry& entry, unsigned char* out_buffer, bool force)
+bool Package::ExtractEntry(const Entry& entry, unsigned char* out_buffer)
 {
-	unsigned test = entry.GetStartingBlockOffset();
 	unsigned current_block_id = entry.GetStartingBlock();
-	unsigned buffer_offset = 0;
 	unsigned file_size = entry.GetFileSize();
-	unsigned current_patch_id = helpers::get_patch_id(package_path);
-	bool entry_in_current_patch = false;
+	unsigned buffer_offset = 0;
+	bool in_current_patch = false;
+
+	unsigned char* block_buffer = new (unsigned char[Block::MAX_SIZE]);
+	unsigned char* decrypt_buffer = new (unsigned char[Block::MAX_SIZE]);
+	unsigned char* decomp_buffer = new (unsigned char[Block::MAX_SIZE]);
+
+	memset(block_buffer, 0, Block::MAX_SIZE);
+	memset(decrypt_buffer, 0, Block::MAX_SIZE);
+	memset(decomp_buffer, 0, Block::MAX_SIZE);
 
 	while (buffer_offset < file_size)
 	{
-		const Block& block = block_table[current_block_id];
-		if (block.patch_id == current_patch_id)
-			entry_in_current_patch = true;
-
-		FILE* patch_file = block.GetPatchFile(package_path);
-
+		auto& block = block_table[current_block_id];
+		FILE* patch_file = block.GetPatchFile(header.package_id);
 		if (!patch_file)
+		{
+			delete[] block_buffer;
+			delete[] decrypt_buffer;
+			delete[] decomp_buffer;
+
 			return false;
+		}
 
-		unsigned char* block_buffer = new (unsigned char[block.size]);
-		unsigned char* decrypt_buffer = new (unsigned char[block.size]);
-		unsigned char* decomp_buffer = new (unsigned char[Block::MAX_SIZE]);
+		if (block.patch_id == header.patch_id)
+			in_current_patch = true;
 
-		fread(block_buffer, 1, block.size, patch_file);
+		fread(block_buffer, 1, Block::MAX_SIZE, patch_file);
 
 		if (block.flags & 2)
 			block.Decrypt(block_buffer, decrypt_buffer, nonce);
 		else
-			memcpy(decrypt_buffer, block_buffer, block.size);
+			memcpy(decrypt_buffer, block_buffer, Block::MAX_SIZE);
 
 
 		if (block.flags & 1)
 			block.Decomp(decrypt_buffer, decomp_buffer);
 		else
-			memcpy(decomp_buffer, decrypt_buffer, block.size);
+			memcpy(decomp_buffer, decrypt_buffer, Block::MAX_SIZE);
 
 		int offset = current_block_id == entry.GetStartingBlock() ? entry.GetStartingBlockOffset() : 0;
 		int size = min(Block::MAX_SIZE - offset, file_size - buffer_offset);
 
 		memcpy(out_buffer + buffer_offset, decomp_buffer + offset, size);
 
+		fclose(patch_file);
+
 		buffer_offset += size;
 		current_block_id++;
-
-		fclose(patch_file);
-		delete[] block_buffer;
-		delete[] decrypt_buffer;
-		delete[] decomp_buffer;
 	}
 
-	return force || entry_in_current_patch;
+	delete[] block_buffer;
+	delete[] decrypt_buffer;
+	delete[] decomp_buffer;
+
+	return in_current_patch;
 }
 
 const std::vector<Entry>& Package::GetEntryTable()

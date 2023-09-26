@@ -3,13 +3,8 @@
 #pragma comment(lib, "bcrypt.lib")
 
 #include "package_block.h"
-#include <bitset>
-#include <string>
-#include <bcrypt.h>
+#include "package.h"
 #include "OodleDecompress.h"
-#include <cmath>
-#include <Windows.h>
-#include "helpers.h"
 
 const unsigned char AES_KEY_0[16] =
 {
@@ -20,16 +15,6 @@ const unsigned char AES_KEY_1[16] =
 {
 	0x3A, 0x4A, 0x5D, 0x36, 0x73, 0xA6, 0x60, 0x58, 0x7E, 0x63, 0xE6, 0x76, 0xE4, 0x08, 0x92, 0xB5,
 };
-
-std::ostream& operator<<(std::ostream& out, const Block& block)
-{
-	std::cout << "\t\tBlock Offset: 0x" << std::uppercase << std::hex << block.offset << std::endl;
-	std::cout << "\t\tBlock Size: 0x" << std::uppercase << std::hex << block.size << std::endl;
-	std::cout << "\t\tBlock PatchID: " << std::dec << block.patch_id << std::endl;
-	std::cout << "\t\tBlock Flags: " << std::bitset<16>(block.flags) << std::endl;
-	std::cout << "\t\tBlock Tag:" << std::uppercase << std::hex << *(unsigned short*)block.tag << std::endl;
-	return out;
-}
 
 bool Block::Decomp(unsigned char* decrypt_buffer, unsigned char* decomp_buffer) const
 {
@@ -81,11 +66,12 @@ bool Block::Decrypt(unsigned char* block_buffer, unsigned char* decrypt_buffer, 
 	return true;
 }
 
-FILE* Block::GetPatchFile(std::string package_path) const
+// returns package with related patch id and shifted to block's offset
+FILE* Block::GetPatchFile(unsigned package_id) const
 {
-	package_path.replace(package_path.end() - 5, package_path.end() - 4, std::to_string(patch_id));
-	FILE* ret = fopen(package_path.c_str(), "rb");
-	if(ret) fseek(ret, offset, SEEK_SET);
+	FILE* ret = Package::GetPackage(package_id, patch_id)->GetFile();
+	if (!ret) return nullptr;
+	fseek(ret, offset, 0);
 	return ret;
 }
 

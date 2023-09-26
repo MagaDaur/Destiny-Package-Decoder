@@ -11,7 +11,7 @@ VertexBuffer::VertexBuffer(unsigned header_hash)
 
 	header = (__vertex_header*)header_raw_data;
 
-	auto& buffer_entry = entry_table[header_entry.GetRefID()];
+	auto& buffer_entry = entry_table[header_entry.GetEntryRefID()];
 
 	buffer_raw_data = new (unsigned char[buffer_entry.GetFileSize()]);
 	g_pPackage->ExtractEntry(buffer_entry, buffer_raw_data);

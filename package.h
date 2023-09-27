@@ -19,7 +19,7 @@ public:
 	const std::vector<Entry>& GetEntryTable();
 	const std::vector<Block>& GetBlockTable();
 
-	bool ExtractEntry(const Entry&, unsigned char*);
+	bool ExtractEntry(const Entry&, unsigned char*, bool force = false);
 	bool ExtractEntryByReference(Hash_Reference, unsigned char*);
 
 	bool SetupDataTables();
@@ -48,7 +48,8 @@ public:
 public:
 	PackageHeader header;
 	inline static std::map<uint32_t, Package> package_table;
-	static Package* GetPackage(unsigned, int);
+	inline static std::map<uint32_t, uint32_t> lastest_package_patches;
+	static Package* GetPackage(int, int patch_id = -1);
 };
 
 extern Package* g_pPackage;

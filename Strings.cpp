@@ -53,7 +53,7 @@ bool StringProcessor::ExportTextToFolder(const std::vector<size_t>& string_table
 	for (auto& entry_index : string_table)
 	{
 		auto& entry = entry_table[entry_index];
-		const std::string file_name = helpers::entry_file_name(entry, entry_index);
+		const std::string file_name = helpers::entry_file_name(entry);
 		auto file_size = entry.GetFileSize();
 		unsigned char* raw_data_buffer = new (unsigned char[file_size]);
 

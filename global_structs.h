@@ -24,7 +24,7 @@ struct Hash_Reference
 
 	int get_package_id()
 	{
-		return (hash >> 13) & 0x3FF + ((hash >> 23) & 0x3 - 1) * 0x400;
+		return ((hash >> 13) & 0x3FF) + (((hash >> 23) & 0x3) - 1) * 0x400;
 	}
 
 	int get_entry_id()

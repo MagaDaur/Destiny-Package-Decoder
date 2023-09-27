@@ -29,11 +29,27 @@ int main()
 
 	for (auto& p : fs::directory_iterator(package_folder_path))
 	{
-		Package package(p.path().generic_string());
+		const std::string package_path = p.path().generic_string();
+
+		if (package_path.find("_en_")  != std::string::npos  ||
+			package_path.find("_sp_")  != std::string::npos  ||
+			package_path.find("_po_")  != std::string::npos  ||
+			package_path.find("_pt_")  != std::string::npos  ||
+			package_path.find("_ko_")  != std::string::npos  ||
+			package_path.find("_mx_")  != std::string::npos  ||
+			package_path.find("_jpn_") != std::string::npos  ||
+			package_path.find("_fr_")  != std::string::npos  ||
+			package_path.find("_it_")  != std::string::npos  ||
+			package_path.find("_de_")  != std::string::npos  ||
+			package_path.find("_cs_")  != std::string::npos) continue;
+
+		Package package(package_path);
 
 		uint32_t package_hash = package.header.package_id | (package.header.patch_id << 20);
 
 		Package::package_table[package_hash] = package;
+		Package::lastest_package_patches[package.header.package_id] = max(Package::lastest_package_patches[package.header.package_id], package.header.patch_id);
+
 		v_packages.push_back(std::pair<uint32_t, time_t>(package_hash, package.header.timestamp));
 	}
 
@@ -57,12 +73,18 @@ int main()
 
 		const size_t package_name_begin = package.package_path.find_last_of('/') + 1;
 		const size_t package_name_end = package.package_path.find_last_of('.');
-		const std::string output_path = output_folder_path + package_date + package.package_path.substr(package_name_begin, package_name_end - package_name_begin) + "/";
+		const std::string package_name = package.package_path.substr(package_name_begin, package_name_end - package_name_begin);
+		const std::string output_path = output_folder_path + package_date + package_name + "/";
 
 		CreateDirectoryA(output_path.c_str(), NULL);
 
 		package.SetupDataTables();
-		package.ExportDataTables(output_path);
+		if (package.ExportDataTables(output_path))
+		{
+			std::cout << package_name << " has been exported!" << std::endl;
+		}
+
+
 	}
 
 	delete g_pOodle;

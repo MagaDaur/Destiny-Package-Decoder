@@ -111,14 +111,14 @@ bool Package::ExportDataTables(const std::string& output_folder_path)
 		ModelProcessor::ExportModelToFile(model_table, "dick");
 	}
 
-	if (1 != 1)//(unknown_table.size())
+	if (unknown_table.size())
 	{
 		CreateDirectoryA(unknown_folder_path.c_str(), NULL);
 		bool has_written = false;
 		for (auto& entry_index : unknown_table)
 		{
 			auto& entry = entry_table[entry_index];
-			auto file_name = unknown_folder_path + helpers::entry_file_name(entry, entry_index) + "_" + helpers::to_hex(entry.A) + ".bin";
+			auto file_name = unknown_folder_path + helpers::entry_file_name(entry) + ".bin";
 			auto file_size = entry.GetFileSize();
 			unsigned char* file_raw_data = new (unsigned char[file_size]);
 			if (!ExtractEntry(entry, file_raw_data))
@@ -143,28 +143,25 @@ bool Package::ExportDataTables(const std::string& output_folder_path)
 	return status;
 }
 
-Package* Package::GetPackage(unsigned package_id, int patch_id)
+Package* Package::GetPackage(int package_id, int patch_id)
 {
-	if (patch_id == -1)
-	{
-		patch_id = 10;
-		while (package_table.count(package_id | (patch_id << 20)) == 0 && patch_id >= 0)
-			patch_id--;
-		if (patch_id < 0) return nullptr;
-	}
+	if(patch_id == -1) return &package_table[package_id | (lastest_package_patches[package_id] << 20)];
 	return &package_table[package_id | (patch_id << 20)];
 }
 
 bool Package::ExtractEntryByReference(Hash_Reference reference, unsigned char* out_buffer)
 {
-	Package* ref_package = GetPackage(reference.get_package_id(), -1);
+	if (!reference.valid()) return false;
+
+	Package* ref_package = GetPackage(reference.get_package_id());
+
 	if (!ref_package) return false;
 	Entry ref_entry = ref_package->entry_table[reference.get_entry_id()];
 
-	return ref_package->ExtractEntry(ref_entry, out_buffer);
+	return ref_package->ExtractEntry(ref_entry, out_buffer, true);
 }
 
-bool Package::ExtractEntry(const Entry& entry, unsigned char* out_buffer)
+bool Package::ExtractEntry(const Entry& entry, unsigned char* out_buffer, bool force)
 {
 	unsigned current_block_id = entry.GetStartingBlock();
 	unsigned file_size = entry.GetFileSize();
@@ -223,7 +220,7 @@ bool Package::ExtractEntry(const Entry& entry, unsigned char* out_buffer)
 	delete[] decrypt_buffer;
 	delete[] decomp_buffer;
 
-	return in_current_patch;
+	return in_current_patch || force;
 }
 
 const std::vector<Entry>& Package::GetEntryTable()

@@ -7,7 +7,7 @@ unsigned short Entry::GetEntryRefID() const
 
 unsigned int Entry::GetPackageRefID() const
 {
-	return (A >> 13) & 0x3FF + ((A >> 23) & 0x3 - 1) * 0x400;
+	return ((A >> 13) & 0x3FF) + (((A >> 23) & 0x3) - 1) * 0x400;
 }
 
 unsigned short Entry::GetStartingBlock() const

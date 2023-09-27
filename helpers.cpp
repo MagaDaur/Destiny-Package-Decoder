@@ -12,7 +12,7 @@ int helpers::get_patch_id(const std::string& package_path)
 	return stoi(package_path.substr(package_path.find_last_of('.') - 1, 1));
 }
 
-std::string helpers::entry_file_name(const Entry& entry, size_t entry_index)
+std::string helpers::entry_file_name(const Entry& entry)
 {
-	return std::to_string(entry_index) + "_" + std::to_string(entry.GetEntryRefID()) + "_" + std::to_string(entry.GetType()) + "_" + std::to_string(entry.GetSubType());
+	return helpers::to_hex(entry.A);
 }

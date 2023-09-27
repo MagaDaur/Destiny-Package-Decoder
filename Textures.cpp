@@ -85,7 +85,7 @@ bool TextureProcessor::ExtractTextureToFolder(const std::vector<size_t>& texture
     {
         auto& header_entry = entry_table[entry_index];
         auto header_file_size = header_entry.GetFileSize();
-        auto file_path = folder_path + helpers::entry_file_name(header_entry, entry_index);
+        auto file_path = folder_path + helpers::entry_file_name(header_entry);
 		auto file_path_w = std::wstring(file_path.begin(), file_path.end()) + L".dds";
 
         unsigned char* header_raw_data = new (unsigned char[header_file_size]);
@@ -107,12 +107,8 @@ bool TextureProcessor::ExtractTextureToFolder(const std::vector<size_t>& texture
 
 		GenerateDDSHeader(&texture_header, raw_texture_data, header_bytes);
 
-		if (texture_header.buffer_ref.valid() && !g_pPackage->ExtractEntryByReference(texture_header.buffer_ref, raw_texture_data + header_bytes))
-		{
-			delete[] raw_texture_data;
-			continue;
-		}
-		else if (!g_pPackage->ExtractEntryByReference(header_entry.A, raw_texture_data + header_bytes))
+		if (!g_pPackage->ExtractEntryByReference(texture_header.buffer_ref, raw_texture_data + header_bytes) && 
+			!g_pPackage->ExtractEntryByReference(header_entry.A, raw_texture_data + header_bytes))
 		{
 			delete[] raw_texture_data;
 			continue;
@@ -143,13 +139,6 @@ bool TextureProcessor::ExtractTextureToFolder(const std::vector<size_t>& texture
 			_wsystem(texconv_command.c_str());
 
 			DeleteFileW(file_path_w.c_str());
-		}
-		else
-		{
-			for (int i = 0; i < info.arraySize; i++)
-			{
-
-			}
 		}
 
 

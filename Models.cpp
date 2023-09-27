@@ -86,7 +86,7 @@ bool ModelProcessor::ExportModelToFile(const std::vector<size_t>& model_table, c
 	for (auto& entry_index : model_table)
 	{
 		auto& entry = entry_table[entry_index];
-		const std::string file_name = helpers::entry_file_name(entry, entry_index);
+		const std::string file_name = helpers::entry_file_name(entry);
 
 
 		if (entry.A == 0x80806F07)

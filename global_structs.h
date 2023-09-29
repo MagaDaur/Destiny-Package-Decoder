@@ -39,16 +39,16 @@ struct Struct_Table
 	uint64_t size;
 	uint64_t offset;
 
-	std::vector<T> get()
+	std::vector<T*> get()
 	{
-		std::vector<T> ret{};
+		std::vector<T*> ret{};
 
 		uint64_t base_addr = uint64_t(this) + offset + 0x18;
 		uint64_t struct_size = sizeof(T);
 
 		for (int i = 0; i < size; i++)
 		{
-			ret.push_back(*(T*)(base_addr + struct_size * i));
+			ret.push_back((T*)(base_addr + struct_size * i));
 		}
 
 		return ret;

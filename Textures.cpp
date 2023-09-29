@@ -38,12 +38,12 @@ bool TextureProcessor::GenerateDDSHeader(const TextureHeader* texture_header, un
 	if (IsCompressed(header10.dxgiFormat))
 	{
 		header.flags |= DDS_HEADER_FLAGS_LINEARSIZE;
-		header.pitchOrLinearSize = slice_pitch;
+		header.pitchOrLinearSize = (uint32)slice_pitch;
 	}
 	else
 	{
 		header.flags |= DDS_HEADER_FLAGS_PITCH;
-		header.pitchOrLinearSize = row_pitch;
+		header.pitchOrLinearSize = (uint32)row_pitch;
 	}
 
 	memcpy(out_buffer, &DDS_MAGIC, 4);
@@ -85,7 +85,7 @@ bool TextureProcessor::ExtractTextureToFolder(const std::vector<size_t>& texture
     {
         auto& header_entry = entry_table[entry_index];
         auto header_file_size = header_entry.GetFileSize();
-        auto file_path = folder_path + helpers::entry_file_name(header_entry);
+        auto file_path = folder_path + helpers::entry_file_name(header_entry, entry_index);
 		auto file_path_w = std::wstring(file_path.begin(), file_path.end()) + L".dds";
 
         unsigned char* header_raw_data = new (unsigned char[header_file_size]);

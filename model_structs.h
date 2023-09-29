@@ -44,41 +44,6 @@ struct Vector4 : Vector3
 	float w;
 };
 
-struct Destiny_EntityModel // entity model info
-{
-	uint64_t file_size; // 0x0
-	uint64_t zeros; // 0x8
-	uint64_t mesh_list_count; // 0x10
-	uint64_t mesh_list_offset; // 0x18
-	Vector4 unk1; // 0x20
-	uint64_t unk2; // 0x30
-	uint64_t unk3; // 0x38
-	uint64_t unk4; // 0x40
-	uint64_t unk5; // 0x48
-	Vector4 model_scale; // 0x50
-	Vector4 model_translation; // 0x60
-	Vector2 texcoord_scale; // 0x70
-	Vector2 texcoord_translation; // 0x78
-	Vector4 unk6; // 0x80
-};
-
-struct Destiny_Mesh // mesh info
-{
-	uint32_t vb_pos_hash; // 0x0
-	uint32_t vb_normal_hash; // 0x4
-	uint32_t vb_old_hash; // 0x8
-	uint32_t unk2; // 0xC
-	uint32_t ib_hash; // 0x10
-	uint32_t vb_color_hash; // 0x14
-	uint32_t vb_sps_hash; // 0x18
-	uint32_t unk3; // 0x1C
-
-	uint64_t parts_list_count; // 0x20
-	uint64_t parts_list_offset; // 0x28
-
-	int16_t stage_part_offsets[37]; // 0x30
-};
-
 struct Destiny_Part // part info
 {
 	uint32_t unk1; // 0x0
@@ -95,6 +60,39 @@ struct Destiny_Part // part info
 	uint8_t lod_category; // 0x21
 	uint8_t unk5; // 0x22
 	uint8_t lod_run; // 0x23
+};
+
+struct Destiny_Mesh // mesh info
+{
+	uint32_t vb_pos_hash; // 0x0
+	uint32_t vb_normal_hash; // 0x4
+	uint32_t vb_old_hash; // 0x8
+	uint32_t unk2; // 0xC
+	uint32_t ib_hash; // 0x10
+	uint32_t vb_color_hash; // 0x14
+	uint32_t vb_sps_hash; // 0x18
+	uint32_t unk3; // 0x1C
+
+	Struct_Table<Destiny_Part> parts;
+
+	int16_t stage_part_offsets[37]; // 0x30
+};
+
+struct Destiny_EntityModel // entity model info
+{
+	uint64_t file_size; // 0x0
+	uint64_t zeros; // 0x8
+	Struct_Table<Destiny_Mesh> meshes;
+	Vector4 unk1; // 0x20
+	uint64_t unk2; // 0x30
+	uint64_t unk3; // 0x38
+	uint64_t unk4; // 0x40
+	uint64_t unk5; // 0x48
+	Vector4 model_scale; // 0x50
+	Vector4 model_translation; // 0x60
+	Vector2 texcoord_scale; // 0x70
+	Vector2 texcoord_translation; // 0x78
+	Vector4 unk6; // 0x80
 };
 
 struct __index_header

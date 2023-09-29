@@ -45,19 +45,19 @@ bool Package::SetupDataTables()
 	{
 		auto& entry = entry_table[i];
 
-		if(package_path.find("redacted") != std::string::npos)
+		if (package_path.find("redacted") != std::string::npos)
 			unknown_table.push_back(i);
 		else if (entry.GetType() == 26 && entry.GetSubType() == 7)
 			audio_table.push_back(i);
-		//else if (entry.GetType() == 27 && entry.GetSubType() == 1)
-			//movie_table.push_back(i);
+		else if (entry.GetType() == 27 && entry.GetSubType() == 1)
+			continue;//movie_table.push_back(i);
 		else if (entry.GetType() == 32 && entry.GetSubType() >= 1 && entry.GetSubType() <= 3)
 			texture_table.push_back(i);
 		else if (entry.GetType() == 8 && entry.GetSubType() == 0 && entry.A == 0x808099F1)
-			string_table.push_back(i);
-		//else if (entry.GetType() == 8 && entry.GetSubType() == 0 && entry.A == 0x80806F07)
-			//model_table.push_back(i);
-		else
+			continue;//string_table.push_back(i);
+		else if (entry.GetType() == 8 && entry.GetSubType() == 0 && entry.A == 0x80806F07)
+			continue;//model_table.push_back(i);
+		else if(entry.A >> 16 == 0x8080)
 			unknown_table.push_back(i);
 	}
 
@@ -118,7 +118,7 @@ bool Package::ExportDataTables(const std::string& output_folder_path)
 		for (auto& entry_index : unknown_table)
 		{
 			auto& entry = entry_table[entry_index];
-			auto file_name = unknown_folder_path + helpers::entry_file_name(entry) + ".bin";
+			auto file_name = unknown_folder_path + helpers::entry_file_name(entry, entry_index) + ".bin";
 			auto file_size = entry.GetFileSize();
 			unsigned char* file_raw_data = new (unsigned char[file_size]);
 			if (!ExtractEntry(entry, file_raw_data))

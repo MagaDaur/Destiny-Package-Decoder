@@ -21,8 +21,6 @@ private:
 
 	FbxManager* manager;
 	FbxScene* scene;
-
-	std::vector<Destiny_Part> part_table;
 };
 
 class ModelProcessor

@@ -10,7 +10,7 @@ bool AudioProcessor::ExportAudioToFolder(const std::vector<size_t>& audio_table,
 	{
 		auto& entry = entry_table[entry_index];
 		
-		const std::string file_name = helpers::entry_file_name(entry);
+		const std::string file_name = helpers::entry_file_name(entry, entry_index);
 		auto file_size = entry.GetFileSize();
 		unsigned char* raw_data_buffer = new (unsigned char[file_size]);
 

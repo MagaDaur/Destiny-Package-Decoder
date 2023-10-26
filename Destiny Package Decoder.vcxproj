@@ -140,10 +140,10 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Audio.cpp" />
+    <ClCompile Include="global_structs.cpp" />
     <ClCompile Include="helpers.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Models.cpp" />
-    <ClCompile Include="Movie.cpp" />
     <ClCompile Include="OodleDecompress.cpp" />
     <ClCompile Include="package.cpp" />
     <ClCompile Include="package_block.cpp" />
@@ -159,7 +159,6 @@
     <ClInclude Include="global_structs.h" />
     <ClInclude Include="helpers.h" />
     <ClInclude Include="Models.h" />
-    <ClInclude Include="Movie.h" />
     <ClInclude Include="OodleDecompress.h" />
     <ClInclude Include="package.h" />
     <ClInclude Include="package_block.h" />

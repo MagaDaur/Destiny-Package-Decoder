@@ -14,11 +14,16 @@ PackageHeader::PackageHeader(const std::string& package_path)
 	timestamp = *(time_t*)&raw_data[0x20];
 	patch_id = *(unsigned short*)&raw_data[0x30];
 
-	entry_table_offset = *(unsigned int*)&raw_data[0x44];
+	language_id = *(unsigned short*)&raw_data[0x32];
+
 	entry_size = *(unsigned int*)&raw_data[0x60];
+	entry_table_offset = *(unsigned int*)&raw_data[0x64];
 
 	block_table_size = *(unsigned int*)&raw_data[0x68];
 	block_table_offset = *(unsigned int*)&raw_data[0x6C];
+
+	hash64_table_size = *(unsigned int*)&raw_data[0xB8];
+	hash64_table_offset = *(unsigned int*)&raw_data[0xBC];
 
 	fclose(package);
 }

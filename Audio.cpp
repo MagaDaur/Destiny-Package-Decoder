@@ -2,10 +2,9 @@
 #include "helpers.h"
 #include <Windows.h>
 
-bool AudioProcessor::ExportAudioToFolder(const std::vector<size_t>& audio_table, const std::string& folder_path)
+bool AudioProcessor::ExportAudioToFolder(const std::vector<size_t>& audio_table, const std::string& folder_path, bool force)
 {
 	auto& entry_table = g_pPackage->GetEntryTable();
-	bool has_written = false;
 	for (auto& entry_index : audio_table)
 	{
 		auto& entry = entry_table[entry_index];
@@ -14,11 +13,12 @@ bool AudioProcessor::ExportAudioToFolder(const std::vector<size_t>& audio_table,
 		auto file_size = entry.GetFileSize();
 		unsigned char* raw_data_buffer = new (unsigned char[file_size]);
 
-		if (!g_pPackage->ExtractEntry(entry, raw_data_buffer))
+		if (!g_pPackage->ExtractEntry(entry, raw_data_buffer, force))
 		{
 			delete[] raw_data_buffer;
 			continue;
 		}
+
 
 		if (entry.GetType() == 26 && entry.GetSubType() == 7)
 		{
@@ -33,11 +33,9 @@ bool AudioProcessor::ExportAudioToFolder(const std::vector<size_t>& audio_table,
 			system(vgmstream_command.c_str());
 
 			DeleteFileA(wem_file_path.c_str());
-
-			has_written = true;
 		}
 
 		delete[] raw_data_buffer;
 	}
-	return has_written;
+	return true;
 }

@@ -8,93 +8,81 @@
 #include <Windows.h>
 
 #include "package.h"
+#include <iostream>
 
-uintptr_t get_offset(void* from, void* to)
-{
-	return uintptr_t(to) - uintptr_t(from);
-}
-
-template <class T> T* read_struct(void* base, unsigned long long* offset, unsigned& seek)
-{
-	seek += sizeof(T);
-	return (T*)((char*)base + get_offset(base, offset) + *offset);
-}
-
-template <class T> T* read_struct(void* base, unsigned& seek)
-{
-	T* ret = (T*)((char*)base + seek);
-	seek += sizeof(T);
-	return ret;
-}
-
-bool is_ru_char(unsigned char* character)
-{
-	return (character[0] == 0xD0 && character[1] >= 0x90 && character[1] <= 0xBF) || (character[0] == 0xD1 && character[1] >= 0x80 && character[1] <= 0x8F);
-}
-
-bool is_ru_string(unsigned char* str, uint64_t size)
-{
-	for (int j = 0; j < size; j++)
-	{
-		if (is_ru_char(str + j))
-		{
-			return true;
-			break;
-		}
-	}
-	return false;
-}
-
-bool StringProcessor::ExportTextToFolder(const std::vector<size_t>& string_table, const std::string& output_folder_path)
+bool StringProcessor::ExportTextToFolder(const std::vector<size_t>& string_table, const std::string& output_folder_path, bool force)
 {
 	auto& entry_table = g_pPackage->GetEntryTable();
-	bool has_ru = false;
 
 	for (auto& entry_index : string_table)
 	{
 		auto& entry = entry_table[entry_index];
-		const std::string file_name = helpers::entry_file_name(entry, entry_index);
+		const std::string file_name = output_folder_path + helpers::entry_file_name(entry, entry_index) + ".txt";
 		auto file_size = entry.GetFileSize();
-		unsigned char* raw_data_buffer = new (unsigned char[file_size]);
+		uint8_t* raw_data_buffer = new uint8_t[file_size];
 
 
-		if (!g_pPackage->ExtractEntry(entry, raw_data_buffer))
+		if (!g_pPackage->ExtractEntry(entry, raw_data_buffer, force))
 		{
 			delete[] raw_data_buffer;
 			continue;
 		}
 
-		if (entry.GetType() == 8 && entry.GetSubType() == 0)
+		FILE* text_file = fopen(file_name.c_str(), "wb");
+
+		if (entry.A == 0x808099ef)
 		{
-			if (entry.A == 0x808099F1)
+			D2Class_EF998080* string_data = (D2Class_EF998080*)raw_data_buffer;
+
+			D2Class_F1998080* string_container_ru = (D2Class_F1998080*)string_data->string_container[12].get_data();
+
+			auto string_hashes = string_data->string_hashes.get();
+			auto string_bytes = string_container_ru->strings.get();
+
+			if (string_hashes.size() == string_bytes.size())
 			{
-				const std::string txt_file_path = output_folder_path + file_name + ".txt";
-				FILE* output_file = fopen(txt_file_path.c_str(), "wb");
-
-				has_ru = false;
-				Destiny_StringHeader* header = (Destiny_StringHeader*)raw_data_buffer;
-
-				for (const auto& string_data : header->strings.get())
+				for (int i = 0; i < string_bytes.size(); i++)
 				{
-					uint8_t* buffer = string_data->get_string();
-
-					if (!has_ru && is_ru_string(buffer, string_data->byte_length))
-						has_ru = true;
-
-					fwrite(buffer, 1, string_data->byte_length, output_file);
-					fwrite(L"\n", 1, 1, output_file);
+					fwrite(string_bytes[i]->get_string(), 1, string_bytes[i]->byte_length, text_file);
+					fwrite("\n", 1, 1, text_file);
 				}
+			}
 
-				fclose(output_file);
 
-				if (!has_ru)
-					DeleteFileA(txt_file_path.c_str());
+
+			delete[](uint8_t*)string_container_ru;
+		}
+
+		else if (entry.A == 0x808099f1)
+		{
+			D2Class_F1998080* string_container = (D2Class_F1998080*)raw_data_buffer;
+
+			auto string_bytes = string_container->strings.get();
+
+			for (auto* string_data : string_bytes)
+			{
+				fwrite(string_data->get_string(), 1, string_data->byte_length, text_file);
+				fwrite("\n", 1, 1, text_file);
 			}
 		}
 
+		else if (entry.A == 0x80809eed)
+		{
+			D2Class_ED9E8080* path_data = (D2Class_ED9E8080*)raw_data_buffer;
+			auto paths = path_data->paths.get();
+
+			for (auto* path_data : paths)
+			{
+				auto* path = path_data->get_string();
+				fwrite(path, 1, strlen(path), text_file);
+				fwrite("\n", 1, 1, text_file);
+			}
+		}
+
+		fclose(text_file);
 		delete[] raw_data_buffer;
 	}
 
 
-	return has_ru;
+	return true;
 }

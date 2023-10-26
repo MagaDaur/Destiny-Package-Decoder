@@ -68,7 +68,7 @@ struct TextureHeader
 	uint16_t array_size; // 0x28
 	uint16_t miplevels; // 0x2A
 	uint8_t pad2[0x10]; // 0x2C
-	Hash_Reference buffer_ref;
+	FileReference buffer_ref;
 };
 
 struct DDS_PIXELFORMAT
@@ -150,5 +150,5 @@ class TextureProcessor
 public:
 	static bool GenerateDDSHeader(const TextureHeader*, unsigned char*, unsigned int&);
 
-	static bool ExtractTextureToFolder(const std::vector<size_t>&, const std::string&);
+	static bool ExtractTextureToFolder(const std::vector<size_t>&, const std::string&, bool force = false);
 };

@@ -36,9 +36,6 @@
     <ClCompile Include="helpers.cpp">
       <Filter>Resource Files</Filter>
     </ClCompile>
-    <ClCompile Include="Movie.cpp">
-      <Filter>Resource Files</Filter>
-    </ClCompile>
     <ClCompile Include="Models.cpp">
       <Filter>Models</Filter>
     </ClCompile>
@@ -72,15 +69,15 @@
     <ClCompile Include="Textures.cpp">
       <Filter>Textures</Filter>
     </ClCompile>
+    <ClCompile Include="global_structs.cpp">
+      <Filter>Resource Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="helpers.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="resource.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Movie.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Models.h">

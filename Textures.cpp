@@ -74,13 +74,11 @@ Image RotateImage(Image image, TEX_FR_FLAGS flags)
 	return ret.GetImages()[0];
 }
 
-bool TextureProcessor::ExtractTextureToFolder(const std::vector<size_t>& texture_table, const std::string& folder_path)
+bool TextureProcessor::ExtractTextureToFolder(const std::vector<size_t>& texture_table, const std::string& folder_path, bool force)
 {
 	const std::wstring folder_path_w = std::wstring(folder_path.begin(), folder_path.end());
 
     auto& entry_table = g_pPackage->GetEntryTable();
-
-	bool has_written = false;
     for (auto& entry_index : texture_table)
     {
         auto& header_entry = entry_table[entry_index];
@@ -89,7 +87,7 @@ bool TextureProcessor::ExtractTextureToFolder(const std::vector<size_t>& texture
 		auto file_path_w = std::wstring(file_path.begin(), file_path.end()) + L".dds";
 
         unsigned char* header_raw_data = new (unsigned char[header_file_size]);
-        if (!g_pPackage->ExtractEntry(header_entry, header_raw_data))
+        if (!g_pPackage->ExtractEntry(header_entry, header_raw_data, force))
         {
             delete[] header_raw_data;
             continue;
@@ -121,17 +119,14 @@ bool TextureProcessor::ExtractTextureToFolder(const std::vector<size_t>& texture
 		
 		texture_file_size = header_bytes + texture_header.size;
 
-		HRESULT check = LoadFromDDSMemory(raw_texture_data, texture_file_size, DDS_FLAGS_NONE, &info, image);
-		if (FAILED(check))
-		{
-			int x = 0;
-		}
+		LoadFromDDSMemory(raw_texture_data, texture_file_size, DDS_FLAGS_NONE, &info, image);
+
 		delete[] raw_texture_data;
 
 		if (IsCompressed(format))
 			image = DecompressImage(image, DXGI_FORMAT_R8G8B8A8_UNORM_SRGB);
 
-		has_written |= SaveToDDSFile(image.GetImages(), image.GetImageCount(), image.GetMetadata(), DDS_FLAGS_NONE, file_path_w.c_str()) == S_OK;
+		SaveToDDSFile(image.GetImages(), image.GetImageCount(), image.GetMetadata(), DDS_FLAGS_NONE, file_path_w.c_str()) == S_OK;
 
 		if (info.arraySize == 1)
 		{
@@ -144,7 +139,7 @@ bool TextureProcessor::ExtractTextureToFolder(const std::vector<size_t>& texture
 
     }
 
-    return has_written;
+    return true;
 }
 
 uint MakePixelFormatFourCC(char char1, char char2, char char3, char char4)

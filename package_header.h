@@ -2,7 +2,7 @@
 
 #include <string>
 
-const unsigned int package_header_size = 0x12C;
+const unsigned int package_header_size = 0x130;
 
 class PackageHeader
 {
@@ -15,6 +15,7 @@ public:
 	unsigned short package_id;
 	unsigned short patch_id;
 
+	unsigned short language_id;
 	time_t timestamp;
 
 	unsigned int   entry_table_offset;
@@ -22,4 +23,7 @@ public:
 
 	unsigned int block_table_size;
 	unsigned int block_table_offset;
+
+	unsigned int hash64_table_size;
+	unsigned int hash64_table_offset;
 };

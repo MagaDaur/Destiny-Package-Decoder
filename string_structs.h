@@ -2,7 +2,7 @@
 
 #include "global_structs.h"
 
-struct Destiny_StringData // string data
+struct D2Class_F7998080 // string data
 {
 	uint64_t unk1; // 0x0
 
@@ -18,24 +18,75 @@ struct Destiny_StringData // string data
 	uint8_t* get_string() { return (uint8_t*)(uint64_t(this) + 0x8 + string_offset); }
 };
 
+struct D2Class_70008080
+{
+	uint32_t string_hash;
+};
 
-struct Destiny_StringHeader
+struct D2Class_EF998080
+{
+	uint64_t filesize;
+
+	D2_Array<D2Class_70008080> string_hashes;
+
+	FileReference string_container[13];
+};
+
+struct D2Class_F1998080
 {
 	uint64_t filesize; // 0x0
 
-	Struct_Table<Destiny_StringData> strings; // 0x8
+	D2_Array<D2Class_F7998080> strings; // 0x8
 };
 
-struct D2Class_80809212
+struct D2Class_F19E8080
+{
+	uint64_t offset;
+
+	uint32_t unk1;
+	uint32_t unk2;
+
+	uint32_t unk3;
+	uint32_t unk4;
+
+	char* get_string()
+	{
+		return (char*)this + offset;
+	}
+};
+
+struct D2Class_ED9E8080
 {
 	uint64_t filesize;
-	
-	uint64_t unk_count;
-	uint64_t unk_offset; // 0x10
+
+	uint64_t unk1;
+	uint64_t unk2;
+
+	FileReference unk_ref1;
+	uint32_t unk3;
+
+	uint64_t unk4;
+
+	D2_Array<D2Class_F19E8080> paths;
 };
 
-struct D2Class_80809214
+struct D2Class_0E5A8080
 {
-	uint64_t unk;
+	uint32_t unk1;
+	uint32_t unk2;
+	uint32_t unk3;
+	uint32_t unk4;
 
+	FileReference64 strings; // 808099ef
+
+	uint16_t unk5;
+	uint16_t unk6;
+
+	uint32_t unk7;
+};
+
+struct D2Class_095A8080
+{
+	uint64_t filesize;
+	D2_Array<D2Class_0E5A8080> string_container;
 };

@@ -20,7 +20,7 @@ public:
 	const std::vector<Block>& GetBlockTable();
 
 	bool ExtractEntry(const Entry&, unsigned char*, bool force = false);
-	bool ExtractEntryByReference(Hash_Reference, unsigned char*);
+	bool ExtractEntryByReference(FileReference, unsigned char*);
 
 	bool SetupDataTables();
 	bool ExportDataTables(const std::string&);
@@ -44,12 +44,16 @@ public:
 	std::vector<size_t> unknown_table;
 
 	std::string package_path;
+	std::string package_short_path;
 
 public:
 	PackageHeader header;
+
 	inline static std::map<uint32_t, Package> package_table;
 	inline static std::map<uint32_t, uint32_t> lastest_package_patches;
-	static Package* GetPackage(int, int patch_id = -1);
+	inline static std::map<uint64_t, uint32_t> hash64_references;
+
+	static Package* GetPackage(int, int patch_id = -1, int language_id = 0);
 };
 
 extern Package* g_pPackage;

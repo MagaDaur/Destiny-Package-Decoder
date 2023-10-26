@@ -11,7 +11,7 @@ struct Block
 	unsigned char pad[0x14]; // 0xC
 	unsigned char tag[0x10]; // 0x20
 
-	FILE* GetPatchFile(unsigned) const;
+	FILE* GetPatchFile(unsigned, unsigned) const;
 	bool Decrypt(unsigned char*, unsigned char*, unsigned char*) const;
 	bool Decomp(unsigned char*, unsigned char*) const;
 

@@ -1,9 +1,10 @@
 #pragma once
 
+
 #include <stdint.h>
 #include <vector>
 
-struct Struct_b89f8080 // array_information
+struct D2Class_b89f8080 // array_information
 {
 	uint64_t list_size;
 	uint32_t list_object_type;
@@ -11,30 +12,38 @@ struct Struct_b89f8080 // array_information
 	uint32_t unk1;
 };
 
-struct Hash_Reference
+struct FileReference
 {
-	Hash_Reference(uint32_t h) : hash(h) {};
+	FileReference(uint32_t h) : hash(h) {};
 
 	uint32_t hash;
 
-	bool valid()
-	{
-		return (int)hash != -1 && hash;
-	}
+	bool valid();
 
-	int get_package_id()
-	{
-		return ((hash >> 13) & 0x3FF) + (((hash >> 23) & 0x3) - 1) * 0x400;
-	}
+	int get_package_id();
 
-	int get_entry_id()
-	{
-		return hash & 0x1FFF;
-	}
+	int get_entry_id();
+
+	uint8_t* get_data();
+};
+
+struct FileReference64
+{
+	FileReference64(uint64_t h) : hash(h) {};
+
+	uint64_t hash;
+
+	bool valid();
+
+	int get_package_id();
+
+	int get_entry_id();
+
+	uint8_t* get_data();
 };
 
 template<class T>
-struct Struct_Table
+struct D2_Array
 {
 	uint64_t size;
 	uint64_t offset;

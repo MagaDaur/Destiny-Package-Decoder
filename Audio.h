@@ -4,5 +4,5 @@
 class AudioProcessor
 {
 public:
-	static bool ExportAudioToFolder(const std::vector<size_t>&, const std::string&);
+	static bool ExportAudioToFolder(const std::vector<size_t>&, const std::string&, bool force = false);
 };

@@ -15,6 +15,6 @@ int helpers::get_patch_id(const std::string& package_path)
 std::string helpers::entry_file_name(const Entry& entry, size_t entry_index)
 {
 	if (entry.A >> 16 != 0x8080)
-		return helpers::to_hex((entry.A & (~0x1FFF)) | (entry_index & 0x1FFF));
-	return helpers::to_hex(entry.A);
+		return std::to_string(entry_index) + "_" + helpers::to_hex((entry.A & (~0x1FFF)) | (entry_index & 0x1FFF));
+	return helpers::to_hex(entry.A) + "_" + std::to_string(entry_index);
 }

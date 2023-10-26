@@ -67,9 +67,9 @@ bool Block::Decrypt(unsigned char* block_buffer, unsigned char* decrypt_buffer, 
 }
 
 // returns package with related patch id and shifted to block's offset
-FILE* Block::GetPatchFile(unsigned package_id) const
+FILE* Block::GetPatchFile(unsigned package_id, unsigned language_id) const
 {
-	FILE* ret = Package::GetPackage(package_id, patch_id)->GetFile();
+	FILE* ret = Package::GetPackage(package_id, patch_id, language_id)->GetFile();
 	if (!ret) return nullptr;
 	fseek(ret, offset, 0);
 	return ret;

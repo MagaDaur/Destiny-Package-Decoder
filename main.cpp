@@ -31,25 +31,9 @@ int main()
 	{
 		const std::string package_path = p.path().generic_string();
 
-		if (package_path.find("_en_")  != std::string::npos   ||
-			package_path.find("_sp_")  != std::string::npos   ||
-			package_path.find("_po_")  != std::string::npos   ||
-			package_path.find("_pt_")  != std::string::npos   ||
-			package_path.find("_ko_")  != std::string::npos   ||
-			package_path.find("_mx_")  != std::string::npos   ||
-			package_path.find("_jpn_") != std::string::npos   ||
-			package_path.find("_fr_")  != std::string::npos   ||
-			package_path.find("_it_")  != std::string::npos   ||
-			package_path.find("_de_")  != std::string::npos   ||
-			package_path.find("_cs_")  != std::string::npos   ||
-			package_path.find("sandbox") != std::string::npos ||
-			package_path.find("gear") != std::string::npos) continue;
-
 		Package package(package_path);
-		std::tm* now = std::localtime(&package.header.timestamp);
-		if (now->tm_mday != 9 || now->tm_mon != 7) continue;
 
-		uint32_t package_hash = package.header.package_id | (package.header.patch_id << 20);
+		uint32_t package_hash = package.header.package_id | (package.header.patch_id << 14) | (package.header.language_id << 20);
 
 		Package::package_table[package_hash] = package;
 		Package::lastest_package_patches[package.header.package_id] = max(Package::lastest_package_patches[package.header.package_id], package.header.patch_id);
@@ -69,7 +53,14 @@ int main()
 		auto& package = Package::package_table[pkg_data.first];
 		g_pPackage = &package;
 
+		if (package.package_path.find("sandbox") != std::string::npos ||
+			package.package_path.find("gear") != std::string::npos) continue;
+
+		if (package.package_path.find("_investment_") == std::string::npos) continue;
+
 		std::tm* now = std::localtime(&package.header.timestamp);
+		//if (now->tm_mon != 7 || now->tm_mday != 9) continue;
+
 		const std::string package_date = "[ " + std::to_string(now->tm_mday) + "." + std::to_string(now->tm_mon + 1) + "." + std::to_string(now->tm_year + 1900) + " ] ";
 
 		const size_t package_name_begin = package.package_path.find_last_of('/') + 1;

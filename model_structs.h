@@ -73,7 +73,7 @@ struct Destiny_Mesh // mesh info
 	uint32_t vb_sps_hash; // 0x18
 	uint32_t unk3; // 0x1C
 
-	Struct_Table<Destiny_Part> parts;
+	D2_Array<Destiny_Part> parts;
 
 	int16_t stage_part_offsets[37]; // 0x30
 };
@@ -82,7 +82,7 @@ struct Destiny_EntityModel // entity model info
 {
 	uint64_t file_size; // 0x0
 	uint64_t zeros; // 0x8
-	Struct_Table<Destiny_Mesh> meshes;
+	D2_Array<Destiny_Mesh> meshes;
 	Vector4 unk1; // 0x20
 	uint64_t unk2; // 0x30
 	uint64_t unk3; // 0x38

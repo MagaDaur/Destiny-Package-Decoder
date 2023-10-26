@@ -5,7 +5,6 @@
 #include "Textures.h"
 #include "Strings.h"
 #include "Models.h"
-#include "Movie.h"
 
 #include <string>
 
@@ -20,16 +19,34 @@ Package::Package(const std::string& package_path) : header(package_path)
 	nonce[11] ^= header.package_id & 0xFF;
 
 	this->package_path = package_path;
+	this->package_short_path = package_path.substr(package_path.find_last_of('/') + 1);
 
 	entry_table.resize(header.entry_size);
 	fseek(package_file, header.entry_table_offset, SEEK_SET);
 	for (unsigned i = 0; i < header.entry_size; i++)
+	{
 		fread(&entry_table[i], sizeof(Entry), 1, package_file);
+		if (entry_table[i].A == 0x80805A09)
+		{
+
+		}
+	}
 
 	block_table.resize(header.block_table_size);
 	fseek(package_file, header.block_table_offset, SEEK_SET);
 	for (unsigned i = 0; i < header.block_table_size; i++)
 		fread(&block_table[i], sizeof(Block), 1, package_file);
+
+	fseek(package_file, header.hash64_table_offset + 0x50, SEEK_SET);
+	for (unsigned i = 0; i < header.hash64_table_size; i++)
+	{
+		uint64_t hash64; uint32_t hash32, type;
+		fread(&hash64, 8, 1, package_file);
+		fread(&hash32, 4, 1, package_file);
+		fread(&type, 4, 1, package_file);
+
+		hash64_references[hash64] = hash32;
+	}
 
 	fclose(package_file);
 }
@@ -49,15 +66,11 @@ bool Package::SetupDataTables()
 			unknown_table.push_back(i);
 		else if (entry.GetType() == 26 && entry.GetSubType() == 7)
 			audio_table.push_back(i);
-		else if (entry.GetType() == 27 && entry.GetSubType() == 1)
-			continue;//movie_table.push_back(i);
 		else if (entry.GetType() == 32 && entry.GetSubType() >= 1 && entry.GetSubType() <= 3)
 			texture_table.push_back(i);
-		else if (entry.GetType() == 8 && entry.GetSubType() == 0 && entry.A == 0x808099F1)
-			continue;//string_table.push_back(i);
-		else if (entry.GetType() == 8 && entry.GetSubType() == 0 && entry.A == 0x80806F07)
-			continue;//model_table.push_back(i);
-		else if(entry.A >> 16 == 0x8080)
+		else if (entry.A == 0x808099ef || entry.A == 0x80809eed || entry.A == 0x808099f1)
+			string_table.push_back(i);
+		else
 			unknown_table.push_back(i);
 	}
 
@@ -67,89 +80,100 @@ bool Package::SetupDataTables()
 bool Package::ExportDataTables(const std::string& output_folder_path)
 {
 	const std::string audio_folder_path = (output_folder_path + "audio/");
-	const std::string video_folder_path = (output_folder_path + "video/");
 	const std::string text_folder_path = (output_folder_path + "text/");
 	const std::string texture_folder_path = (output_folder_path + "image/");
 	const std::string unknown_folder_path = (output_folder_path + "unknown/");
-
-	unsigned status = 0;
+	const std::string bungie_folder_path = (output_folder_path + "bungie/");
+	const std::string movie_folder_path = (output_folder_path + "movie/");
+	const std::string ogg_folder_path = (output_folder_path + "bnk/");
 
 	if (audio_table.size())
 	{
 		CreateDirectoryA(audio_folder_path.c_str(), NULL);
-		status |= AudioProcessor::ExportAudioToFolder(audio_table, audio_folder_path) << 0;
-		if (~status & 1)
+		AudioProcessor::ExportAudioToFolder(audio_table, audio_folder_path);
+		if (fs::is_empty(audio_folder_path))
 			fs::remove_all(audio_folder_path);
-	}
-		
-	if (movie_table.size())
-	{
-		CreateDirectoryA(video_folder_path.c_str(), NULL);
-		status |= MovieProcessor::ExportMovieToFolder(movie_table, video_folder_path) << 1;
-		if (~status & 2)
-			fs::remove_all(video_folder_path);
 	}
 		
 	if (string_table.size())
 	{
 		CreateDirectoryA(text_folder_path.c_str(), NULL);
-		status |= StringProcessor::ExportTextToFolder(string_table, text_folder_path) << 2;
-		if (~status & 4)
+		StringProcessor::ExportTextToFolder(string_table, text_folder_path);
+		if (fs::is_empty(text_folder_path))
 			fs::remove_all(text_folder_path);
 	}
 
 	if (texture_table.size())
 	{
 		CreateDirectoryA(texture_folder_path.c_str(), NULL);
-		status |= TextureProcessor::ExtractTextureToFolder(texture_table, texture_folder_path) << 3;
-		if (~status & 8)
+		TextureProcessor::ExtractTextureToFolder(texture_table, texture_folder_path);
+		if (fs::is_empty(texture_folder_path))
 			fs::remove_all(texture_folder_path);
-	}
-
-	if (model_table.size())
-	{
-		ModelProcessor::ExportModelToFile(model_table, "dick");
 	}
 
 	if (unknown_table.size())
 	{
 		CreateDirectoryA(unknown_folder_path.c_str(), NULL);
-		bool has_written = false;
+		CreateDirectoryA(bungie_folder_path.c_str(), NULL);
+		CreateDirectoryA(movie_folder_path.c_str(), NULL);
+		CreateDirectoryA(ogg_folder_path.c_str(), NULL);
+
 		for (auto& entry_index : unknown_table)
 		{
 			auto& entry = entry_table[entry_index];
-			auto file_name = unknown_folder_path + helpers::entry_file_name(entry, entry_index) + ".bin";
+			auto file_path = unknown_folder_path + helpers::entry_file_name(entry, entry_index) + ".bin";
+			if(entry.GetType() == 26 && entry.GetSubType() == 6)
+				file_path = ogg_folder_path + helpers::entry_file_name(entry, entry_index) + ".bnk";
+			else if(entry.GetType() == 27 && entry.GetSubType() == 1)
+				file_path = movie_folder_path + helpers::entry_file_name(entry, entry_index) + ".usm";
+			else if(entry.A >> 16 == 0x8080)
+				file_path = bungie_folder_path + helpers::entry_file_name(entry, entry_index) + ".bin";
+
 			auto file_size = entry.GetFileSize();
 			unsigned char* file_raw_data = new (unsigned char[file_size]);
-			if (!ExtractEntry(entry, file_raw_data))
+			if (!ExtractEntry(entry, file_raw_data, true))
 			{
 				delete[] file_raw_data;
 				continue;
 			}
-			FILE* unknown_file = fopen(file_name.c_str(), "wb");
+
+			FILE* unknown_file = fopen(file_path.c_str(), "wb");
 			fwrite(file_raw_data, file_size, 1, unknown_file);
-			has_written = true;
 			fclose(unknown_file);
+
 			delete[] file_raw_data;
 		}
-		status |= has_written << 5;
-		if (~status & 32)
+
+		if (fs::is_empty(unknown_folder_path))
 			fs::remove_all(unknown_folder_path);
+
+		if (fs::is_empty(bungie_folder_path))
+			fs::remove_all(bungie_folder_path);
+
+		if (fs::is_empty(movie_folder_path))
+			fs::remove_all(movie_folder_path);
+
+		if (fs::is_empty(ogg_folder_path))
+			fs::remove_all(ogg_folder_path);
 	}
 
-	if (!status)
+	if (fs::is_empty(output_folder_path))
+	{
 		fs::remove_all(output_folder_path);
+		return false;
+	}
 
-	return status;
+
+	return true;
 }
 
-Package* Package::GetPackage(int package_id, int patch_id)
+Package* Package::GetPackage(int package_id, int patch_id, int language_id)
 {
-	if(patch_id == -1) return &package_table[package_id | (lastest_package_patches[package_id] << 20)];
-	return &package_table[package_id | (patch_id << 20)];
+	if(patch_id == -1) return &package_table[package_id | (lastest_package_patches[package_id] << 14) | (language_id << 20)];
+	return &package_table[package_id | (patch_id << 14) | (language_id << 20)];
 }
 
-bool Package::ExtractEntryByReference(Hash_Reference reference, unsigned char* out_buffer)
+bool Package::ExtractEntryByReference(FileReference reference, unsigned char* out_buffer)
 {
 	if (!reference.valid()) return false;
 
@@ -179,7 +203,7 @@ bool Package::ExtractEntry(const Entry& entry, unsigned char* out_buffer, bool f
 	while (buffer_offset < file_size)
 	{
 		auto& block = block_table[current_block_id];
-		FILE* patch_file = block.GetPatchFile(header.package_id);
+		FILE* patch_file = block.GetPatchFile(header.package_id, header.language_id);
 		if (!patch_file)
 		{
 			delete[] block_buffer;

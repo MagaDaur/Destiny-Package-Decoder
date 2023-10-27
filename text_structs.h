@@ -23,20 +23,20 @@ struct D2Class_70008080
 	uint32_t string_hash;
 };
 
+struct D2Class_F1998080
+{
+	uint64_t filesize; // 0x0
+
+	D2_Array<D2Class_F7998080> strings; // 0x8
+};
+
 struct D2Class_EF998080
 {
 	uint64_t filesize;
 
 	D2_Array<D2Class_70008080> string_hashes;
 
-	FileReference string_container[13];
-};
-
-struct D2Class_F1998080
-{
-	uint64_t filesize; // 0x0
-
-	D2_Array<D2Class_F7998080> strings; // 0x8
+	FileReference<D2Class_F1998080> string_container[13];
 };
 
 struct D2Class_F19E8080
@@ -62,7 +62,7 @@ struct D2Class_ED9E8080
 	uint64_t unk1;
 	uint64_t unk2;
 
-	FileReference unk_ref1;
+	FileReference<uint8_t[]> unk_ref1;
 	uint32_t unk3;
 
 	uint64_t unk4;
@@ -77,7 +77,7 @@ struct D2Class_0E5A8080
 	uint32_t unk3;
 	uint32_t unk4;
 
-	FileReference64 strings; // 808099ef
+	FileReference64<D2Class_EF998080> strings; // 808099ef
 
 	uint16_t unk5;
 	uint16_t unk6;

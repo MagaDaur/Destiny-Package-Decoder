@@ -1,64 +1,9 @@
-#include "Textures.h"
+/*#include "Textures.h"
 #include "helpers.h"
 
 bool SetPixelFormat(DDS_HEADER& header, DXGI_FORMAT format);
 
-bool TextureProcessor::GenerateDDSHeader(const TextureHeader* texture_header, unsigned char* out_buffer, unsigned int& bytes_written)
-{
-	DDS_HEADER header = { };
 
-	header.width = texture_header->width;
-	header.height = texture_header->height;
-	header.depth = 1;
-
-	header.size = sizeof(DDS_HEADER);
-	header.flags = DDS_HEADER_FLAGS_TEXTURE | DDS_HEADER_FLAGS_MIPMAP;
-	header.caps = DDS_SURFACE_FLAGS_TEXTURE;
-	header.mipMapCount = 1;
-
-	DDS_HEADER_DXT10 header10 = { };
-
-	header10.dxgiFormat = (DXGI_FORMAT)texture_header->format;
-	header10.arraySize = texture_header->array_size;
-	header10.resourceDimension = 3;
-	header10.miscFlag = 0;
-	header10.reserved = 0;
-
-	if (header10.arraySize % 6 == 0)
-	{
-		header10.miscFlag |= TEX_MISC_TEXTURECUBE;
-		header10.arraySize /= 6;
-	}
-
-	bool is_dx10 = SetPixelFormat(header, header10.dxgiFormat);
-
-	size_t row_pitch = 0, slice_pitch = 0;
-	ComputePitch(header10.dxgiFormat, header.width, header.height, row_pitch, slice_pitch);
-
-	if (IsCompressed(header10.dxgiFormat))
-	{
-		header.flags |= DDS_HEADER_FLAGS_LINEARSIZE;
-		header.pitchOrLinearSize = (uint32)slice_pitch;
-	}
-	else
-	{
-		header.flags |= DDS_HEADER_FLAGS_PITCH;
-		header.pitchOrLinearSize = (uint32)row_pitch;
-	}
-
-	memcpy(out_buffer, &DDS_MAGIC, 4);
-	memcpy(out_buffer + 4, &header, header.size);
-
-	bytes_written = 4 + header.size;
-
-	if (is_dx10)
-	{
-		memcpy(out_buffer + 4 + header.size, &header10, sizeof(DDS_HEADER_DXT10));
-		bytes_written += sizeof(DDS_HEADER_DXT10);
-	}
-
-	return true;
-}
 
 ScratchImage DecompressImage(const ScratchImage& image, DXGI_FORMAT format)
 {
@@ -142,7 +87,77 @@ bool TextureProcessor::ExtractTextureToFolder(const std::vector<size_t>& texture
     return true;
 }
 
-uint MakePixelFormatFourCC(char char1, char char2, char char3, char char4)
+*/
+
+#include "package.h"
+#include "texture_structs.h"
+
+bool Package::TextureModule::Export(const Entry& entry, const std::string& output_folder_path, bool force = false)
+{
+	return true;
+}
+
+uint8_t* GenerateDDSHeader(const TextureHeader* texture_header, uint8_t* out_buffer)
+{
+	DDS_HEADER header = { };
+
+	header.width = texture_header->width;
+	header.height = texture_header->height;
+	header.depth = 1;
+
+	header.size = sizeof(DDS_HEADER);
+	header.flags = DDS_HEADER_FLAGS_TEXTURE | DDS_HEADER_FLAGS_MIPMAP;
+	header.caps = DDS_SURFACE_FLAGS_TEXTURE;
+	header.mipMapCount = 1;
+
+	DDS_HEADER_DXT10 header10 = { };
+
+	header10.dxgiFormat = (DXGI_FORMAT)texture_header->format;
+	header10.arraySize = texture_header->array_size;
+	header10.resourceDimension = 3;
+	header10.miscFlag = 0;
+	header10.reserved = 0;
+
+	if (header10.arraySize % 6 == 0)
+	{
+		header10.miscFlag |= TEX_MISC_TEXTURECUBE;
+		header10.arraySize /= 6;
+	}
+
+	bool is_dx10 = SetPixelFormat(header, header10.dxgiFormat);
+
+	size_t row_pitch = 0, slice_pitch = 0;
+	ComputePitch(header10.dxgiFormat, header.width, header.height, row_pitch, slice_pitch);
+
+	if (IsCompressed(header10.dxgiFormat))
+	{
+		header.flags |= DDS_HEADER_FLAGS_LINEARSIZE;
+		header.pitchOrLinearSize = (uint32_t)slice_pitch;
+	}
+	else
+	{
+		header.flags |= DDS_HEADER_FLAGS_PITCH;
+		header.pitchOrLinearSize = (uint32_t)row_pitch;
+	}
+
+	uint64_t offset = 0;
+	memcpy(out_buffer, &DDS_MAGIC, 4);
+
+	offset += 4;
+	memcpy(out_buffer + offset, &header, header.size);
+
+	if (is_dx10)
+	{
+		offset += header.size;
+		memcpy(out_buffer + offset, &header10, sizeof(DDS_HEADER_DXT10));
+
+		offset += sizeof(DDS_HEADER_DXT10);
+	}
+
+	return out_buffer + offset;
+}
+
+uint32_t MakePixelFormatFourCC(char char1, char char2, char char3, char char4)
 {
 	return (char1) | (char2 << 8) | (char3 << 16) | (char4 << 24);
 }

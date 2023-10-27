@@ -1,5 +1,4 @@
-#include "IndexBuffer.h"
-
+/*#include "IndexBuffer.h"
 IndexBuffer::IndexBuffer(const Entry& header_entry)
 {
 	auto& entry_table = g_pPackage->GetEntryTable();
@@ -81,4 +80,4 @@ IndexBuffer::~IndexBuffer()
 	header_raw_data = nullptr;
 	buffer_raw_data = nullptr;
 	header = nullptr;
-}
+}*/

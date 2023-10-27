@@ -78,7 +78,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
     </ClCompile>
     <Link>
@@ -92,7 +92,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
     </ClCompile>
     <Link>
@@ -106,7 +106,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
@@ -128,7 +128,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
     </ClCompile>
     <Link>
@@ -139,36 +139,30 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Audio.cpp" />
+    <ClCompile Include="AudioModule.cpp" />
+    <ClCompile Include="audio_structs.h" />
+    <ClCompile Include="BinaryModule.cpp" />
     <ClCompile Include="global_structs.cpp" />
-    <ClCompile Include="helpers.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Models.cpp" />
     <ClCompile Include="OodleDecompress.cpp" />
     <ClCompile Include="package.cpp" />
     <ClCompile Include="package_block.cpp" />
-    <ClCompile Include="package_entry.cpp" />
     <ClCompile Include="package_header.cpp" />
-    <ClCompile Include="Strings.cpp" />
-    <ClCompile Include="Textures.cpp" />
+    <ClCompile Include="TextModule.cpp" />
+    <ClCompile Include="TextureModule.cpp" />
     <ClCompile Include="VertexBuffer.cpp" />
     <ClCompile Include="IndexBuffer.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Audio.h" />
     <ClInclude Include="global_structs.h" />
-    <ClInclude Include="helpers.h" />
     <ClInclude Include="Models.h" />
     <ClInclude Include="OodleDecompress.h" />
     <ClInclude Include="package.h" />
-    <ClInclude Include="package_block.h" />
-    <ClInclude Include="package_entry.h" />
     <ClInclude Include="package_header.h" />
-    <ClInclude Include="resource.h" />
-    <ClInclude Include="Strings.h" />
     <ClInclude Include="model_structs.h" />
-    <ClInclude Include="string_structs.h" />
-    <ClInclude Include="Textures.h" />
+    <ClInclude Include="text_structs.h" />
+    <ClInclude Include="texture_structs.h" />
     <ClInclude Include="IndexBuffer.h" />
     <ClInclude Include="VertexBuffer.h" />
   </ItemGroup>

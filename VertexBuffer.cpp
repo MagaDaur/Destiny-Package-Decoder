@@ -1,4 +1,4 @@
-#include "VertexBuffer.h"
+/*#include "VertexBuffer.h"
 
 VertexBuffer::VertexBuffer(unsigned header_hash)
 {
@@ -25,4 +25,4 @@ VertexBuffer::~VertexBuffer()
 	header_raw_data = nullptr;
 	buffer_raw_data = nullptr;
 	header = nullptr;
-}
+}*/

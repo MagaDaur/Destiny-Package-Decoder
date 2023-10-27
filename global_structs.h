@@ -1,45 +1,34 @@
 #pragma once
 
-
 #include <stdint.h>
 #include <vector>
+#include <memory>
 
-struct D2Class_b89f8080 // array_information
+template<class T>
+class FileReference
 {
-	uint64_t list_size;
-	uint32_t list_object_type;
+public:
+	FileReference(uint32_t tag) : tag(tag) {};
 
-	uint32_t unk1;
+	bool valid() const { return (tag && tag != 0xffffffff); };
+
+	int get_package_id() const { return ((tag >> 13) & 0x3FF) + (((tag >> 23) & 0x3) - 1) * 0x400; };
+
+	int get_entry_id() const { return tag & 0x1FFF; };
+
+	std::unique_ptr<T> get_data() const;
+
+private:
+	uint32_t tag;
 };
 
-struct FileReference
+template<class T>
+class FileReference64
 {
-	FileReference(uint32_t h) : hash(h) {};
-
-	uint32_t hash;
-
-	bool valid();
-
-	int get_package_id();
-
-	int get_entry_id();
-
-	uint8_t* get_data();
-};
-
-struct FileReference64
-{
-	FileReference64(uint64_t h) : hash(h) {};
-
-	uint64_t hash;
-
-	bool valid();
-
-	int get_package_id();
-
-	int get_entry_id();
-
-	uint8_t* get_data();
+public:
+	FileReference<T> GetTag32() const;
+private:
+	uint64_t tag64;
 };
 
 template<class T>
@@ -48,18 +37,5 @@ struct D2_Array
 	uint64_t size;
 	uint64_t offset;
 
-	std::vector<T*> get()
-	{
-		std::vector<T*> ret{};
-
-		uint64_t base_addr = uint64_t(this) + offset + 0x18;
-		uint64_t struct_size = sizeof(T);
-
-		for (int i = 0; i < size; i++)
-		{
-			ret.push_back((T*)(base_addr + struct_size * i));
-		}
-
-		return ret;
-	}
+	std::vector<T*> get() const;
 };

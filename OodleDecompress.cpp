@@ -1,5 +1,5 @@
 #include "OodleDecompress.h"
-#include "package_block.h"
+#include "package_header.h"
 
 Oodle::Oodle()
 {

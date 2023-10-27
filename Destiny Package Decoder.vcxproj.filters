@@ -16,25 +16,25 @@
     <Filter Include="Models">
       <UniqueIdentifier>{0038d0dd-9c76-4ff0-a388-dfe7b5e8b04b}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Audio">
-      <UniqueIdentifier>{f88978c1-d09f-4dba-b72f-5818ddd131f6}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Package">
       <UniqueIdentifier>{5f5ab977-5a90-4622-ba56-cace0ddb4d97}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Strings">
-      <UniqueIdentifier>{c3800db5-c43f-4d23-82ba-b67e63cd0019}</UniqueIdentifier>
+    <Filter Include="BinaryModule">
+      <UniqueIdentifier>{d59a0d59-19bc-4f0f-bb38-129ce5141056}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Textures">
+    <Filter Include="AudioModule">
+      <UniqueIdentifier>{f88978c1-d09f-4dba-b72f-5818ddd131f6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="TextModule">
+      <UniqueIdentifier>{4b51cd87-36a7-4174-9d6c-4962bbf7b96b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="TextureModule">
       <UniqueIdentifier>{04aba524-4136-45dd-b78e-a30fcf6dcf7b}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="helpers.cpp">
-      <Filter>Resource Files</Filter>
     </ClCompile>
     <ClCompile Include="Models.cpp">
       <Filter>Models</Filter>
@@ -45,9 +45,6 @@
     <ClCompile Include="IndexBuffer.cpp">
       <Filter>Models</Filter>
     </ClCompile>
-    <ClCompile Include="Audio.cpp">
-      <Filter>Audio</Filter>
-    </ClCompile>
     <ClCompile Include="package.cpp">
       <Filter>Package</Filter>
     </ClCompile>
@@ -57,45 +54,36 @@
     <ClCompile Include="OodleDecompress.cpp">
       <Filter>Package</Filter>
     </ClCompile>
-    <ClCompile Include="package_entry.cpp">
-      <Filter>Package</Filter>
-    </ClCompile>
     <ClCompile Include="package_header.cpp">
       <Filter>Package</Filter>
     </ClCompile>
-    <ClCompile Include="Strings.cpp">
-      <Filter>Strings</Filter>
+    <ClCompile Include="TextureModule.cpp">
+      <Filter>TextureModule</Filter>
     </ClCompile>
-    <ClCompile Include="Textures.cpp">
-      <Filter>Textures</Filter>
+    <ClCompile Include="AudioModule.cpp">
+      <Filter>AudioModule</Filter>
+    </ClCompile>
+    <ClCompile Include="audio_structs.h">
+      <Filter>AudioModule</Filter>
+    </ClCompile>
+    <ClCompile Include="TextModule.cpp">
+      <Filter>TextModule</Filter>
+    </ClCompile>
+    <ClCompile Include="BinaryModule.cpp">
+      <Filter>BinaryModule</Filter>
     </ClCompile>
     <ClCompile Include="global_structs.cpp">
-      <Filter>Resource Files</Filter>
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="helpers.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="resource.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Models.h">
       <Filter>Models</Filter>
-    </ClInclude>
-    <ClInclude Include="Audio.h">
-      <Filter>Audio</Filter>
     </ClInclude>
     <ClInclude Include="OodleDecompress.h">
       <Filter>Package</Filter>
     </ClInclude>
     <ClInclude Include="package.h">
-      <Filter>Package</Filter>
-    </ClInclude>
-    <ClInclude Include="package_block.h">
-      <Filter>Package</Filter>
-    </ClInclude>
-    <ClInclude Include="package_entry.h">
       <Filter>Package</Filter>
     </ClInclude>
     <ClInclude Include="package_header.h">
@@ -110,17 +98,14 @@
     <ClInclude Include="IndexBuffer.h">
       <Filter>Models</Filter>
     </ClInclude>
-    <ClInclude Include="Strings.h">
-      <Filter>Strings</Filter>
+    <ClInclude Include="texture_structs.h">
+      <Filter>TextureModule</Filter>
     </ClInclude>
-    <ClInclude Include="string_structs.h">
-      <Filter>Strings</Filter>
-    </ClInclude>
-    <ClInclude Include="Textures.h">
-      <Filter>Textures</Filter>
+    <ClInclude Include="text_structs.h">
+      <Filter>TextModule</Filter>
     </ClInclude>
     <ClInclude Include="global_structs.h">
-      <Filter>Header Files</Filter>
+      <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

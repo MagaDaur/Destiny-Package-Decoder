@@ -1,59 +1,100 @@
 #pragma once
 
-#define _CRT_SECURE_NO_WARNINGS
-
 #include "package_header.h"
-#include "package_block.h"
-#include "package_entry.h"
 #include "global_structs.h"
-#include <array>
-#include <map>
 #include <vector>
+#include <unordered_map>
 
-class Package
+#define SETUP_TEXT		(1 << 0)
+#define SETUP_AUDIO		(1 << 1)
+#define SETUP_TEXTURE	(1 << 2)
+#define SETUP_STRUCT	(1 << 3)
+#define SETUP_MOVIE		(1 << 4)
+#define SETUP_BNK		(1 << 5)
+#define SETUP_ALL		0xFFFFFFFF
+
+class Package;
+
+class PackageModule
+{
+protected:
+	PackageModule() : pkg(nullptr) {};
+	PackageModule(Package* pkg) : pkg(pkg) {};
+
+	virtual bool Export(const Entry&, const std::string&, bool) = 0;
+
+	Package* pkg;
+};
+
+class Package : public PackageHeader
 {
 public:
-	Package() : header() {};
 	Package(const std::string&);
 
-	const std::vector<Entry>& GetEntryTable();
-	const std::vector<Block>& GetBlockTable();
+	bool SetupDataFrames(int flags);
+	bool ExportFilesToFolder(const std::string& folder_path);
 
-	bool ExtractEntry(const Entry&, unsigned char*, bool force = false);
-	bool ExtractEntryByReference(FileReference, unsigned char*);
+	std::unique_ptr<uint8_t[]> ExtractEntry(const Entry&, bool);
 
-	bool SetupDataTables();
-	bool ExportDataTables(const std::string&);
+	static Package* GetPackage(int, int, int);
+	template<class T>
+	static std::unique_ptr<uint8_t[]> ExtractEntry(const FileReference<T>&, bool force = false);
 
-	FILE* GetFile();
+	static uint64_t MakeHash(uint64_t package_id, int64_t patch_id = -1, uint64_t language_id = 0) {
+		if (patch_id == -1) patch_id = pkg_id_lp[package_id];
+		return package_id | (patch_id << 16) | (language_id << 32);
+	};
 
-	bool valid() { return header.timestamp >= 0; };
-
-//private:
-	unsigned char nonce[12] = { 0x84, 0xEA, 0x11, 0xC0, 0xAC, 0xAB, 0xFA, 0x20, 0x33, 0x11, 0x26, 0x99 };
-
+protected:
 	std::vector<Entry> entry_table;
 	std::vector<Block> block_table;
 
-	std::vector<size_t> audio_table;
-	std::vector<size_t> texture_table;
-	std::vector<size_t> movie_table;
-	std::vector<size_t> model_table;
-	std::vector<size_t> string_table;
+	class AudioModule : PackageModule
+	{
+	public:
+		AudioModule(Package* pkg) : PackageModule(pkg) {};
 
-	std::vector<size_t> unknown_table;
+		virtual bool Export(const Entry&, const std::string&, bool) override;
+	private:
+	};
 
-	std::string package_path;
-	std::string package_short_path;
+	class TextModule : PackageModule
+	{
+	public:
+		TextModule(Package* pkg) : PackageModule(pkg) {};
 
-public:
-	PackageHeader header;
+		virtual bool Export(const Entry&, const std::string&, bool) override;
+	private:
+		static inline std::unordered_map<uint32_t, std::u8string> string_hmap;
+	};
 
-	inline static std::map<uint32_t, Package> package_table;
-	inline static std::map<uint32_t, uint32_t> lastest_package_patches;
-	inline static std::map<uint64_t, uint32_t> hash64_references;
+	class BinaryModule : PackageModule
+	{
+	public:
+		BinaryModule(Package* pkg) : PackageModule(pkg) {};
 
-	static Package* GetPackage(int, int patch_id = -1, int language_id = 0);
+		virtual bool Export(const Entry&, const std::string&, bool) override;
+	private:
+	};
+
+	class TextureModule : PackageModule
+	{
+	public:
+		TextureModule(Package* pkg) : PackageModule(pkg) {};
+
+		virtual bool Export(const Entry&, const std::string&, bool) override;
+	private:
+	};
+
+private:
+	AudioModule mAudio;
+	TextModule mText;
+	BinaryModule mBinary;
+	TextureModule mTexture;
+
+	static inline std::unordered_map<uint64_t, uint64_t> pkg_id_lp;
+	static inline std::unordered_map<uint64_t, Package> package_hmap;
+	static inline std::unordered_map<uint64_t, HashContainer> hashtag_hmap;
+
+	uint8_t nonce[12] = { 0x84, 0xEA, 0x11, 0xC0, 0xAC, 0xAB, 0xFA, 0x20, 0x33, 0x11, 0x26, 0x99 };
 };
-
-extern Package* g_pPackage;

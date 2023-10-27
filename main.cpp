@@ -13,10 +13,18 @@ const std::string output_folder_path = "D:/PackageDecoder/";
 
 using hash_time_pair = std::pair<uint64_t, time_t>;
 
+struct Deleter
+{
+	void operator()(D2Class_F7998080* p) const {
+		//p->~dummy(); // Noop in your case
+		delete[] reinterpret_cast<uint8_t*>(p);
+	}
+};
+
 int main()
 {
 	auto buffer = std::make_unique<uint8_t[]>(100);
-	std::unique_ptr<D2Class_F7998080> header = std::move(buffer);
+	std::unique_ptr<D2Class_F7998080, Deleter> header(reinterpret_cast<D2Class_F7998080*>(buffer.release()));
 
 	std::vector<hash_time_pair> v_packages{};
 

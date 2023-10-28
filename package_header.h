@@ -40,7 +40,7 @@ private:
 
 struct Entry
 {
-	Entry(uint32_t entry[4])
+	Entry(uint32_t entry[5])
 	{
 		ref_entry_id = entry[0] & 0x1FFF;
 		ref_package_id = ((entry[0] >> 13) & 0x3FF) + (((entry[0] >> 23) & 0x3) - 1) * 0x400;
@@ -55,7 +55,18 @@ struct Entry
 		subtype = (entry[1] >> 6) & 0x7;
 
 		class_type = entry[0];
+
+		entry_id = entry[4];
 	};
+
+	std::string GenerateName() const;
+
+	uint32_t type;
+	uint32_t subtype;
+
+	uint32_t class_type;
+
+	uint32_t file_size;
 
 	uint32_t ref_entry_id;
 	uint32_t ref_package_id;
@@ -63,12 +74,7 @@ struct Entry
 	uint32_t starting_block_index;
 	uint32_t starting_block_offset;
 
-	uint32_t file_size;
-
-	uint32_t type;
-	uint32_t subtype;
-
-	uint32_t class_type;
+	uint32_t entry_id;
 };
 
 struct Block
@@ -80,7 +86,6 @@ struct Block
 	uint8_t pad[0x14]; // 0xC
 	uint8_t tag[0x10]; // 0x20
 
-	FILE* GetPatchFile(uint32_t, uint32_t) const;
 	bool Decrypt(uint8_t*, uint8_t*, uint8_t*) const;
 	bool Decomp(uint8_t*, uint8_t*) const;
 

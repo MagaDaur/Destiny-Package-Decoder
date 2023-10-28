@@ -92,7 +92,7 @@ bool TextureProcessor::ExtractTextureToFolder(const std::vector<size_t>& texture
 #include "package.h"
 #include "texture_structs.h"
 
-bool Package::TextureModule::Export(const Entry& entry, const std::string& output_folder_path, bool force = false)
+bool Package::TextureModule::Export(const Entry& entry, const std::string& output_folder_path, bool force)
 {
 	return true;
 }

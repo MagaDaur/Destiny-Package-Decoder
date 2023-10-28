@@ -1,79 +1,94 @@
 #include "package.h"
+#include <Windows.h>
+#undef min
+#undef max
 #include <algorithm>
 #include <memory>
-#include "text_structs.h"
+#include <sstream>
+#include <filesystem>
 
-Package::Package(const std::string& package_path) : PackageHeader(package_path), mAudio(this), mText(this), mBinary(this), mTexture(this)
+namespace fs = std::filesystem;
+
+bool Package::SetupDataFrames(const std::string& folder_path, int flags)
 {
-	nonce[0] ^= (package_id >> 8) & 0xFF;
-	nonce[11] ^= package_id & 0xFF;
+	if (package_path.find("_redacted_") != std::string::npos) return false;
 
-	FILE* package = fopen(package_path.c_str(), "rb");
+	const std::string audio_folder_path		= (folder_path + "audio/");
+	const std::string text_folder_path		= (folder_path + "text/");
+	const std::string texture_folder_path	= (folder_path + "image/");
+	const std::string unknown_folder_path	= (folder_path + "unknown/");
+	const std::string bungie_folder_path	= (folder_path + "bungie/");
+	const std::string movie_folder_path		= (folder_path + "movie/");
+	const std::string bnk_folder_path		= (folder_path + "bnk/");
 
-	entry_table.reserve(entry_table_size);
-	block_table.reserve(block_table_size);
+	CreateDirectoryA(audio_folder_path.c_str(), NULL);
+	CreateDirectoryA(text_folder_path.c_str(), NULL);
+	CreateDirectoryA(texture_folder_path.c_str(), NULL);
+	CreateDirectoryA(unknown_folder_path.c_str(), NULL);
+	CreateDirectoryA(bungie_folder_path.c_str(), NULL);
+	CreateDirectoryA(movie_folder_path.c_str(), NULL);
+	CreateDirectoryA(bnk_folder_path.c_str(), NULL);
 
-	fseek(package, entry_table_offset, SEEK_SET);
-	for(uint32_t i = 0; i < entry_table_size; i++)
+	for (const auto& entry : entry_table)
 	{
-		uint32_t entry_raw[4]{};
-		fread(entry_raw, 4, 4, package);
-
-		Entry entry(entry_raw);
-
-		entry_table.push_back(entry);
+		if ((flags & SETUP_AUDIO) && entry.type == 26 && entry.subtype == 7)
+		{
+			mAudio.Export(entry, audio_folder_path);
+		}
+		else if ((flags & SETUP_TEXTURE) && entry.type == 32 && entry.subtype >= 1 && entry.subtype <= 3)
+		{
+			mTexture.Export(entry, texture_folder_path);
+		}
+		else if ((flags & SETUP_BNK) && entry.type == 26 && entry.subtype == 6)
+		{
+			mBinary.Export(entry, bnk_folder_path);
+		}
+		else if ((flags & SETUP_MOVIE) && entry.type == 27 && entry.subtype == 1)
+		{
+			mBinary.Export(entry, movie_folder_path);
+		}
+		else if ((flags & SETUP_TEXT) && (entry.class_type == 0x808099EF || entry.class_type == 0x80809EED || entry.class_type == 0x808099F1))
+		{
+			mText.Export(entry, text_folder_path);
+		}
+		else if ((flags & SETUP_STRUCT) && entry.class_type >> 16 == 0x8080)
+		{
+			mBinary.Export(entry, bungie_folder_path);
+		}
+		else if ((flags & SETUP_UNKNOWN))
+		{
+			mBinary.Export(entry, unknown_folder_path);
+		}
 	}
 
-	fseek(package, block_table_offset, SEEK_SET);
-	for(uint32_t i = 0; i < block_table_size; i++)
-	{
-		Block block{};
-		fread(&block, sizeof(Block), 1, package);
+	if (fs::is_empty(audio_folder_path))
+		fs::remove_all(audio_folder_path);
 
-		block_table.push_back(block);
-	}
+	if (fs::is_empty(text_folder_path))
+		fs::remove_all(text_folder_path);
 
-	fseek(package, hash64_table_offset + 0x50, SEEK_SET);
-	for(uint32_t i = 0; i < hash64_table_size; i++)
-	{
-		HashContainer container{};
-		fread(&container, sizeof(HashContainer), 1, package);
+	if (fs::is_empty(texture_folder_path))
+		fs::remove_all(texture_folder_path);
 
-		hashtag_hmap.insert(std::make_pair(container.tag64, container));
-	}
+	if (fs::is_empty(unknown_folder_path))
+		fs::remove_all(unknown_folder_path);
+
+	if (fs::is_empty(bungie_folder_path))
+		fs::remove_all(bungie_folder_path);
+
+	if (fs::is_empty(movie_folder_path))
+		fs::remove_all(movie_folder_path);
+
+	if (fs::is_empty(bnk_folder_path))
+		fs::remove_all(bnk_folder_path);
 	
-	fclose(package);
+	if (fs::is_empty(folder_path))
+	{
+		fs::remove_all(folder_path);
+		return false;
+	}
 
-	package_hmap.insert(std::make_pair(GetHash(), *this));
-	pkg_id_lp[package_id] = std::max(pkg_id_lp[package_id], patch_id);
-}
-
-Package* Package::GetPackage(int package_id, int patch_id = -1, int language_id = 0)
-{
-	auto package_hash = MakeHash(package_id, patch_id, language_id);
-
-	if (package_hmap.find(package_hash) == package_hmap.end()) return nullptr;
-
-	return &package_hmap.at(package_hash);
-}
-
-template<class T>
-std::unique_ptr<uint8_t[]> Package::ExtractEntry(const FileReference<T>& reference, bool force)
-{
-	if (!reference.valid()) return nullptr;
-
-	Package* ref_package = GetPackage(reference.get_package_id());
-	Package* ref_package_ru = GetPackage(reference.get_package_id(), -1, 8);
-
-	if (!ref_package && !ref_package_ru) return nullptr;
-
-	ref_package = ref_package ? ref_package : ref_package_ru;
-
-	if (reference.get_entry_id() >= ref_package->entry_table.size()) return nullptr;
-
-	auto& entry = ref_package->entry_table.at(reference.get_entry_id());
-
-	return ref_package->ExtractEntry(entry, force);
+	return true;
 }
 
 std::unique_ptr<uint8_t[]> Package::ExtractEntry(const Entry& entry, bool force = false)
@@ -95,7 +110,7 @@ std::unique_ptr<uint8_t[]> Package::ExtractEntry(const Entry& entry, bool force 
 	{
 		auto& block = block_table[current_block_id];
 
-		if (block.patch_id == patch_id) return nullptr;
+		if (force && block.patch_id != patch_id) return nullptr;
 
 		Package* patch_package = GetPackage(package_id, block.patch_id, language_id);
 		if (!patch_package) return nullptr;
@@ -128,4 +143,80 @@ std::unique_ptr<uint8_t[]> Package::ExtractEntry(const Entry& entry, bool force 
 	}
 
 	return out_buffer;
+}
+
+Package::Package(const std::string& package_path) : PackageHeader(package_path), mAudio(this), mText(this), mBinary(this), mTexture(this)
+{
+	nonce[0] ^= (package_id >> 8) & 0xFF;
+	nonce[11] ^= package_id & 0xFF;
+
+	FILE* package = fopen(package_path.c_str(), "rb");
+
+	entry_table.reserve(entry_table_size);
+	block_table.reserve(block_table_size);
+
+	fseek(package, entry_table_offset, SEEK_SET);
+	for (uint32_t i = 0; i < entry_table_size; i++)
+	{
+		uint32_t entry_raw[5]{};
+		fread(entry_raw, 4, 4, package);
+		entry_raw[4] = i;
+
+		Entry entry(entry_raw);
+
+		entry_table.push_back(entry);
+	}
+
+	fseek(package, block_table_offset, SEEK_SET);
+	for (uint32_t i = 0; i < block_table_size; i++)
+	{
+		Block block{};
+		fread(&block, sizeof(Block), 1, package);
+
+		block_table.push_back(block);
+	}
+
+	fseek(package, hash64_table_offset + 0x50, SEEK_SET);
+	for (uint32_t i = 0; i < hash64_table_size; i++)
+	{
+		HashContainer container{};
+		fread(&container, sizeof(HashContainer), 1, package);
+
+		hashtag_hmap.insert({ container.tag64, container });
+	}
+
+	fclose(package);
+
+	package_hmap.insert({ GetHash(), this });
+	pkg_ltstptch_hmap[package_id] = std::max(pkg_ltstptch_hmap[package_id], patch_id);
+}
+
+void Package::ClearMap()
+{
+	for (auto pair : package_hmap)
+	{
+		delete pair.second;
+	}
+}
+
+Package* Package::GetPackage(const uint16_t& package_id, const int16_t& patch_id, const uint16_t& language_id)
+{
+	auto package_hash = MakeHash(package_id, patch_id, language_id);
+
+	if (package_hmap.find(package_hash) == package_hmap.end()) return nullptr;
+
+	return package_hmap.at(package_hash);
+}
+
+bool PackageModule::Export(const Entry&, const std::string& folder_path, bool force)
+{
+	CreateDirectoryA(folder_path.c_str(), NULL);
+	
+	return true;
+}
+
+std::string Entry::GenerateName() const
+{
+	std::stringstream ss; ss << std::hex << std::uppercase << class_type;
+	return std::to_string(entry_id) + "_" + ss.str();
 }

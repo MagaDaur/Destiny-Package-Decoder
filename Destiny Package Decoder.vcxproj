@@ -142,7 +142,6 @@
     <ClCompile Include="AudioModule.cpp" />
     <ClCompile Include="audio_structs.h" />
     <ClCompile Include="BinaryModule.cpp" />
-    <ClCompile Include="global_structs.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Models.cpp" />
     <ClCompile Include="OodleDecompress.cpp" />

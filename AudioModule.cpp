@@ -3,7 +3,8 @@
 
 bool Package::AudioModule::Export(const Entry& entry, const std::string& output_folder_path, bool force)
 {
-	PackageModule::Export(entry, output_folder_path, force);
+	auto buffer = pkg->ExtractEntry(entry, force);
+	if (!buffer) return false;
 
 	auto file_name = output_folder_path + entry.GenerateName();
 
@@ -11,9 +12,6 @@ bool Package::AudioModule::Export(const Entry& entry, const std::string& output_
 	auto wav_file_path = file_name + ".wav";
 
 	FILE* output_file = fopen(wem_file_path.c_str(), "wb");
-
-	auto buffer = pkg->ExtractEntry(entry, force);
-	if (!buffer) return false;
 
 	fwrite(buffer.get(), 1, entry.file_size, output_file);
 

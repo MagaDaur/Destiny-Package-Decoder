@@ -1,5 +1,6 @@
 #include "package_header.h"
 #include <cstdio>
+#include "global_structs.h"
  
 PackageHeader::PackageHeader(const std::string& package_path) : package_path(package_path)
 {
@@ -23,4 +24,16 @@ PackageHeader::PackageHeader(const std::string& package_path) : package_path(pac
 	hash64_table_offset = *(uint32_t*)&raw_data[0xBC];
 
 	fclose(package);
+}
+
+std::string Helpers::to_hex(uint64_t n)
+{
+	std::stringstream ss;
+	ss << std::hex << std::uppercase << n;
+	return ss.str();
+}
+
+std::wstring Helpers::to_wstring(std::string src)
+{
+	return std::wstring(src.begin(), src.end());
 }

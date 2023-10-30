@@ -1,103 +1,73 @@
-/*#include "Textures.h"
-#include "helpers.h"
-
-bool SetPixelFormat(DDS_HEADER& header, DXGI_FORMAT format);
-
-
-
-ScratchImage DecompressImage(const ScratchImage& image, DXGI_FORMAT format)
-{
-	ScratchImage ret;
-	Decompress(image.GetImages(), image.GetImageCount(), image.GetMetadata(), format, ret);
-	return ret;
-}
-
-Image RotateImage(Image image, TEX_FR_FLAGS flags)
-{
-	ScratchImage ret;
-	auto hr = FlipRotate(image, flags, ret); // doesnt work on x64
-	return ret.GetImages()[0];
-}
-
-bool TextureProcessor::ExtractTextureToFolder(const std::vector<size_t>& texture_table, const std::string& folder_path, bool force)
-{
-	const std::wstring folder_path_w = std::wstring(folder_path.begin(), folder_path.end());
-
-    auto& entry_table = g_pPackage->GetEntryTable();
-    for (auto& entry_index : texture_table)
-    {
-        auto& header_entry = entry_table[entry_index];
-        auto header_file_size = header_entry.GetFileSize();
-        auto file_path = folder_path + helpers::entry_file_name(header_entry, entry_index);
-		auto file_path_w = std::wstring(file_path.begin(), file_path.end()) + L".dds";
-
-        unsigned char* header_raw_data = new (unsigned char[header_file_size]);
-        if (!g_pPackage->ExtractEntry(header_entry, header_raw_data, force))
-        {
-            delete[] header_raw_data;
-            continue;
-        }
-
-        auto texture_header = *(TextureHeader*)header_raw_data;
-		delete[] header_raw_data;
-
-		if (texture_header.depth != 1)
-			continue;
-
-		unsigned int header_bytes = 0;
-        unsigned int texture_file_size = DDS_HEADER_SIZE + texture_header.size;
-        unsigned char* raw_texture_data = new (unsigned char[texture_file_size]);
-
-		GenerateDDSHeader(&texture_header, raw_texture_data, header_bytes);
-
-		if (!g_pPackage->ExtractEntryByReference(texture_header.buffer_ref, raw_texture_data + header_bytes) && 
-			!g_pPackage->ExtractEntryByReference(header_entry.A, raw_texture_data + header_bytes))
-		{
-			delete[] raw_texture_data;
-			continue;
-		}
-
-
-		auto format = (DXGI_FORMAT)texture_header.format;
-		ScratchImage image;
-		TexMetadata info;
-		
-		texture_file_size = header_bytes + texture_header.size;
-
-		LoadFromDDSMemory(raw_texture_data, texture_file_size, DDS_FLAGS_NONE, &info, image);
-
-		delete[] raw_texture_data;
-
-		if (IsCompressed(format))
-			image = DecompressImage(image, DXGI_FORMAT_R8G8B8A8_UNORM_SRGB);
-
-		SaveToDDSFile(image.GetImages(), image.GetImageCount(), image.GetMetadata(), DDS_FLAGS_NONE, file_path_w.c_str()) == S_OK;
-
-		if (info.arraySize == 1)
-		{
-			const std::wstring texconv_command = L"external\\texconv\\texconv.exe \"" + file_path_w + L"\" -ft PNG -srgb -nowic -o \"" + folder_path_w + L"\"";
-			_wsystem(texconv_command.c_str());
-
-			DeleteFileW(file_path_w.c_str());
-		}
-
-
-    }
-
-    return true;
-}
-
-*/
-
 #include "package.h"
 #include "texture_structs.h"
 
-bool Package::TextureModule::Export(const Entry& entry, const std::string& output_folder_path, bool force)
+constexpr auto DDS_HEADER_SIZE = 4 + sizeof(DDS_HEADER) + sizeof(DDS_HEADER_DXT10);
+
+bool Package::TextureModule::Export(const Entry& entry, const std::wstring& output_folder_path, bool force)
 {
+	auto texture_header = pkg->ExtractEntry<TextureHeader>(entry, force);
+	if (!texture_header || texture_header->array_size != 1 || texture_header->depth != 1 || texture_header->format == 0x22 || texture_header->format == 0xA) return false;
+
+	auto file_name = output_folder_path + Helpers::to_wstring(entry.GenerateName() + ".dds");
+	
+	auto dds_header_buffer = std::make_unique<uint8_t[]>(DDS_HEADER_SIZE);
+	auto dds_header_size = GenerateDDSHeader(texture_header.get(), dds_header_buffer.get());
+	const auto dds_texture_size = dds_header_size + texture_header->size;
+	auto dds_texture_buffer = std::make_unique<uint8_t[]>(dds_texture_size);
+
+	memcpy(dds_texture_buffer.get(), dds_header_buffer.get(), dds_header_size);
+
+	{
+		auto ref_texture_buffer = texture_header->buffer_ref.get_data();
+
+		if (ref_texture_buffer)
+		{
+			auto ref_entry = texture_header->buffer_ref.get_entry();
+			memcpy(dds_texture_buffer.get() + dds_header_size, ref_texture_buffer.get(), ref_entry->file_size);
+
+			if (ref_entry->file_size != texture_header->size)
+			{
+				auto entry_reference = FileReference<uint8_t>(entry.class_type);
+				auto entry_reference_buffer = entry_reference.get_data();
+
+				memcpy(dds_texture_buffer.get() + dds_header_size + ref_entry->file_size, entry_reference_buffer.get(), entry_reference.get_entry()->file_size);
+			}
+		}
+		else
+		{
+			auto entry_reference = FileReference<uint8_t>(entry.class_type);
+			auto entry_reference_buffer = entry_reference.get_data();
+
+			memcpy(dds_texture_buffer.get() + dds_header_size, entry_reference_buffer.get(), entry_reference.get_entry()->file_size);
+		}
+	}
+
+	ScratchImage image, decomp;
+	TexMetadata metadata;
+
+	if (FAILED(LoadFromDDSMemory(dds_texture_buffer.get(), dds_texture_size, DDS_FLAGS_NONE, &metadata, image)))
+		return false;
+
+	if (IsCompressed(metadata.format))
+	{
+		if (FAILED(Decompress(image.GetImages(), image.GetImageCount(), metadata, DXGI_FORMAT_R8G8B8A8_UNORM_SRGB, decomp)))
+			return false;
+		if (FAILED(SaveToDDSFile(decomp.GetImages(), decomp.GetImageCount(), metadata, DDS_FLAGS_NONE, file_name.c_str())))
+			return false;
+	}
+	else if (FAILED(SaveToDDSFile(image.GetImages(), image.GetImageCount(), metadata, DDS_FLAGS_NONE, file_name.c_str())))
+		return false;
+
+	const std::wstring texconv_command = L"external\\texconv\\texconv.exe \"" + file_name + L"\" -ft PNG -srgb -nowic -o \"" + output_folder_path + L"\"";
+	
+	_wsystem(texconv_command.c_str());
+
+	DeleteFileW(file_name.c_str());
+
 	return true;
 }
 
-uint8_t* GenerateDDSHeader(const TextureHeader* texture_header, uint8_t* out_buffer)
+uint64_t GenerateDDSHeader(const TextureHeader* texture_header, uint8_t* out_buffer)
 {
 	DDS_HEADER header = { };
 
@@ -141,23 +111,23 @@ uint8_t* GenerateDDSHeader(const TextureHeader* texture_header, uint8_t* out_buf
 	}
 
 	uint64_t offset = 0;
-	memcpy(out_buffer, &DDS_MAGIC, 4);
 
+	memcpy(out_buffer, &DDS_MAGIC, 4);
 	offset += 4;
+
 	memcpy(out_buffer + offset, &header, header.size);
+	offset += header.size;
 
 	if (is_dx10)
 	{
-		offset += header.size;
 		memcpy(out_buffer + offset, &header10, sizeof(DDS_HEADER_DXT10));
-
 		offset += sizeof(DDS_HEADER_DXT10);
 	}
 
-	return out_buffer + offset;
+	return offset;
 }
 
-uint32_t MakePixelFormatFourCC(char char1, char char2, char char3, char char4)
+const uint32_t MakePixelFormatFourCC(char char1, char char2, char char3, char char4)
 {
 	return (char1) | (char2 << 8) | (char3 << 16) | (char4 << 24);
 }

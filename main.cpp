@@ -40,6 +40,7 @@ int main()
 		auto* date_info = std::localtime(&date);
 
 		auto package_path = pkg->GetFilePath();
+
 		auto package_name_begin = package_path.find_last_of('/') + 1;
 		auto package_name_end = package_path.find_last_of('.');
 		auto package_name = package_path.substr(package_name_begin, package_name_end - package_name_begin);

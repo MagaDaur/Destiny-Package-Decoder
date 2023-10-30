@@ -18,7 +18,7 @@ struct TextureHeader
 	uint16_t array_size; // 0x28
 	uint16_t miplevels; // 0x2A
 	uint8_t pad2[0x10]; // 0x2C
-	FileReference<uint8_t[]> buffer_ref;
+	FileReference<uint8_t> buffer_ref;
 };
 
 struct DDS_PIXELFORMAT
@@ -60,8 +60,8 @@ typedef struct
 	uint32_t      reserved;
 } DDS_HEADER_DXT10;
 
-uint8_t* GenerateDDSHeader(const TextureHeader*, uint8_t*);
-uint32_t MakePixelFormatFourCC(char, char, char, char);
+uint64_t GenerateDDSHeader(const TextureHeader*, uint8_t*);
+const uint32_t MakePixelFormatFourCC(char, char, char, char);
 bool SetPixelFormat(DDS_HEADER&, DXGI_FORMAT);
 
 const uint32_t DDSFOURCC = 0x00000004;  // DDPFFOURCC
@@ -105,14 +105,6 @@ const DDS_PIXELFORMAT V8U8 = { sizeof(DDS_PIXELFORMAT), DDSBUMPDUDV, 0, 16, 0x00
 const DDS_PIXELFORMAT Q8W8V8U8 = { sizeof(DDS_PIXELFORMAT), DDSBUMPDUDV, 0, 32, 0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000 };
 const DDS_PIXELFORMAT V16U16 = { sizeof(DDS_PIXELFORMAT), DDSBUMPDUDV, 0, 32, 0x0000ffff, 0xffff0000, 0x00000000, 0x00000000 };
 const DDS_PIXELFORMAT DX10 = { sizeof(DDS_PIXELFORMAT), DDSFOURCC, MakePixelFormatFourCC('D', 'X', '1', '0'), 0, 0, 0, 0, 0 };
-
-#define DDS_FOURCC      0x00000004  // DDPF_FOURCC
-#define DDS_RGB         0x00000040  // DDPF_RGB
-#define DDS_RGBA        0x00000041  // DDPF_RGB | DDPF_ALPHAPIXELS
-#define DDS_LUMINANCE   0x00020000  // DDPF_LUMINANCE
-#define DDS_LUMINANCEA  0x00020001  // DDPF_LUMINANCE | DDPF_ALPHAPIXELS
-#define DDS_ALPHA       0x00000002  // DDPF_ALPHA
-#define DDS_PAL8        0x00000020  // DDPF_PALETTEINDEXED8
 
 #define DDS_HEADER_FLAGS_TEXTURE        0x00001007  // DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT
 #define DDS_HEADER_FLAGS_MIPMAP         0x00020000  // DDSD_MIPMAPCOUNT

@@ -15,7 +15,7 @@ bool Package::SetupDataFrames(const std::string& folder_path, int flags)
 
 	const std::string audio_folder_path		= (folder_path + "audio/");
 	const std::string text_folder_path		= (folder_path + "text/");
-	const std::string texture_folder_path	= (folder_path + "image/");
+	const std::wstring texture_folder_path	= Helpers::to_wstring(folder_path + "image/");
 	const std::string unknown_folder_path	= (folder_path + "unknown/");
 	const std::string bungie_folder_path	= (folder_path + "bungie/");
 	const std::string movie_folder_path		= (folder_path + "movie/");
@@ -23,7 +23,7 @@ bool Package::SetupDataFrames(const std::string& folder_path, int flags)
 
 	CreateDirectoryA(audio_folder_path.c_str(), NULL);
 	CreateDirectoryA(text_folder_path.c_str(), NULL);
-	CreateDirectoryA(texture_folder_path.c_str(), NULL);
+	CreateDirectoryW(texture_folder_path.c_str(), NULL);
 	CreateDirectoryA(unknown_folder_path.c_str(), NULL);
 	CreateDirectoryA(bungie_folder_path.c_str(), NULL);
 	CreateDirectoryA(movie_folder_path.c_str(), NULL);
@@ -33,7 +33,7 @@ bool Package::SetupDataFrames(const std::string& folder_path, int flags)
 	{
 		if ((flags & SETUP_AUDIO) && entry.type == 26 && entry.subtype == 7)
 		{
-			mAudio.Export(entry, audio_folder_path);
+			//mAudio.Export(entry, audio_folder_path);
 		}
 		else if ((flags & SETUP_TEXTURE) && entry.type == 32 && entry.subtype >= 1 && entry.subtype <= 3)
 		{
@@ -41,23 +41,23 @@ bool Package::SetupDataFrames(const std::string& folder_path, int flags)
 		}
 		else if ((flags & SETUP_BNK) && entry.type == 26 && entry.subtype == 6)
 		{
-			mBinary.Export(entry, bnk_folder_path);
+			//mBinary.Export(entry, bnk_folder_path);
 		}
 		else if ((flags & SETUP_MOVIE) && entry.type == 27 && entry.subtype == 1)
 		{
-			mBinary.Export(entry, movie_folder_path);
+			//mBinary.Export(entry, movie_folder_path);
 		}
 		else if ((flags & SETUP_TEXT) && (entry.class_type == 0x808099EF || entry.class_type == 0x80809EED || entry.class_type == 0x808099F1))
 		{
-			mText.Export(entry, text_folder_path);
+			//mText.Export(entry, text_folder_path);
 		}
 		else if ((flags & SETUP_STRUCT) && entry.class_type >> 16 == 0x8080)
 		{
-			mBinary.Export(entry, bungie_folder_path);
+			//mBinary.Export(entry, bungie_folder_path);
 		}
 		else if ((flags & SETUP_UNKNOWN))
 		{
-			mBinary.Export(entry, unknown_folder_path);
+			//mBinary.Export(entry, unknown_folder_path);
 		}
 	}
 
@@ -110,7 +110,7 @@ std::unique_ptr<uint8_t[]> Package::ExtractEntry(const Entry& entry, bool force 
 	{
 		auto& block = block_table[current_block_id];
 
-		if (force && block.patch_id != patch_id) return nullptr;
+		if (!force && block.patch_id != patch_id) return nullptr;
 
 		Package* patch_package = GetPackage(package_id, block.patch_id, language_id);
 		if (!patch_package) return nullptr;
@@ -206,13 +206,6 @@ Package* Package::GetPackage(const uint16_t& package_id, const int16_t& patch_id
 	if (package_hmap.find(package_hash) == package_hmap.end()) return nullptr;
 
 	return package_hmap.at(package_hash);
-}
-
-bool PackageModule::Export(const Entry&, const std::string& folder_path, bool force)
-{
-	CreateDirectoryA(folder_path.c_str(), NULL);
-	
-	return true;
 }
 
 std::string Entry::GenerateName() const

@@ -77,7 +77,7 @@ struct D2Class_0E5A8080
 	uint32_t unk3;
 	uint32_t unk4;
 
-	FileReference64<D2Class_EF998080> strings; // 808099ef
+	FileReference64<D2Class_EF998080> strings;
 
 	uint16_t unk5;
 	uint16_t unk6;

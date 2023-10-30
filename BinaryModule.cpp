@@ -2,7 +2,8 @@
 
 bool Package::BinaryModule::Export(const Entry& entry, const std::string& output_folder_path, bool force)
 {
-	PackageModule::Export(entry, output_folder_path, force);
+	auto buffer = pkg->ExtractEntry(entry, force);
+	if (!buffer) return false;
 
 	auto file_name = output_folder_path + entry.GenerateName();
 	if (entry.type == 26 && entry.subtype == 6) file_name += ".bnk";
@@ -10,9 +11,6 @@ bool Package::BinaryModule::Export(const Entry& entry, const std::string& output
 	else file_name += ".bin";
 
 	FILE* output_file = fopen(file_name.c_str(), "wb");
-
-	auto buffer = pkg->ExtractEntry(entry, force);
-	if (!buffer) return false;
 
 	fwrite(buffer.get(), 1, entry.file_size, output_file);
 

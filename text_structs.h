@@ -2,6 +2,13 @@
 
 #include "global_structs.h"
 
+
+
+struct D2Class_9F548080
+{
+	uint64_t filesize;
+};
+
 struct D2Class_F7998080 // string data
 {
 	uint64_t unk1; // 0x0

@@ -94,6 +94,34 @@ struct D2_Array
 	}
 };
 
+struct D2_StrIndexRef
+{
+	uint32_t container_index;
+	uint32_t hash;
+
+	std::u8string get_string()
+	{
+		auto container_ref = Package::TextModule::indexed_investment_strings[container_index];
+		auto conainer_hashes = container_ref->string_hashes.get();
+
+		auto found = std::find(conainer_hashes.begin(), container_hashes.end(), hash);
+		if(found == conainer_hashes.end()) return u"unknown string";
+
+		auto string_container = container_ref->string_container[12].get_data();
+		auto string_vector = string_container->strings.get();
+
+		return "todo";
+	}
+};
+
+template <class T>
+struct D2_RelativeOffset
+{
+	uint64_t offset;
+
+	T* get() { return (T*)(uint64_t(this) + offset); }
+};
+
 namespace Helpers
 {
 	std::string to_hex(uint64_t);

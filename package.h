@@ -101,6 +101,8 @@ protected:
 		bool Export(const Entry&, const std::string&, bool force = false);
 	private:
 		static inline std::map<uint32_t, std::u8string> string_hmap;
+
+		static inline std::vector<FileReference64<D2Class_EF998080>> indexed_investment_strings;
 	};
 
 	class BinaryModule : PackageModule

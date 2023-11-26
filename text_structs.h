@@ -1,13 +1,7 @@
 #pragma once
 
-#include "global_structs.h"
-
-
-
-struct D2Class_9F548080
-{
-	uint64_t filesize;
-};
+#include "d2class.h"
+#include <filesystem>
 
 struct D2Class_F7998080 // string data
 {
@@ -22,7 +16,15 @@ struct D2Class_F7998080 // string data
 
 	uint64_t unk2; // 0x18
 
-	uint8_t* get_string() { return (uint8_t*)(uint64_t(this) + 0x8 + string_offset); }
+	std::wstring get_string()
+	{
+		std::u8string ret; ret.resize(byte_length);
+		char8_t* buffer = (char8_t*)(uint64_t(this) + 0x8 + string_offset);
+
+		memcpy(ret.data(), buffer, byte_length);
+
+		return std::filesystem::path(ret).generic_wstring();
+	}
 };
 
 struct D2Class_70008080
@@ -75,25 +77,4 @@ struct D2Class_ED9E8080
 	uint64_t unk4;
 
 	D2_Array<D2Class_F19E8080> paths;
-};
-
-struct D2Class_0E5A8080
-{
-	uint32_t unk1;
-	uint32_t unk2;
-	uint32_t unk3;
-	uint32_t unk4;
-
-	FileReference64<D2Class_EF998080> strings;
-
-	uint16_t unk5;
-	uint16_t unk6;
-
-	uint32_t unk7;
-};
-
-struct D2Class_095A8080
-{
-	uint64_t filesize;
-	D2_Array<D2Class_0E5A8080> string_container;
 };

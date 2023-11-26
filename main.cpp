@@ -16,6 +16,8 @@ using hash_time_pair = std::pair<uint64_t, time_t>;
 
 int main()
 {
+	g_pOodle = new Oodle();
+
 	std::vector<hash_time_pair> v_packages{};
 
 	for (auto& p : fs::directory_iterator(package_folder_path))
@@ -25,6 +27,8 @@ int main()
 		Package* pkg = new Package(package_path);
 
 		v_packages.push_back({ pkg->GetHash(), pkg->GetCreationDate() });
+
+		pkg->SetupGlobals();
 	}
 
 	std::sort(v_packages.begin(), v_packages.end(), [](hash_time_pair const& a, hash_time_pair const& b)
@@ -32,12 +36,12 @@ int main()
 			return a.second > b.second;
 		});
 
-	g_pOodle = new Oodle();
-
 	for(const auto& [hash, date] : v_packages)
 	{
 		Package* pkg = Package::GetPackage(hash);
 		auto* date_info = std::localtime(&date);
+
+		//if (date_info->tm_mday != 9 || date_info->tm_mon != 7) continue;
 
 		auto package_path = pkg->GetFilePath();
 
@@ -50,11 +54,13 @@ int main()
 
 		CreateDirectoryA(folder_path.c_str(), NULL);
 
-		pkg->SetupDataFrames(folder_path);
+		if (pkg->SetupDataFrames(folder_path, SETUP_INVESTMENT))
+			fs::remove_all(folder_path);
 	}
 
-	delete g_pOodle;
 	Package::ClearMap();
+
+	delete g_pOodle;
 
 	return 0;
 }

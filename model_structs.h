@@ -1,6 +1,6 @@
 #pragma once
 
-#include "global_structs.h"
+#include "d2class.h"
 
 struct Vector2
 {

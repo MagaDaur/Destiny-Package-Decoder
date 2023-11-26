@@ -1,7 +1,9 @@
 #include "package.h"
 #include <Windows.h>
+
 #undef min
 #undef max
+
 #include <algorithm>
 #include <memory>
 #include <sstream>
@@ -20,6 +22,7 @@ bool Package::SetupDataFrames(const std::string& folder_path, int flags)
 	const std::string bungie_folder_path	= (folder_path + "bungie/");
 	const std::string movie_folder_path		= (folder_path + "movie/");
 	const std::string bnk_folder_path		= (folder_path + "bnk/");
+	const std::wstring items_folder_path	= Helpers::to_wstring(folder_path + "items/");
 
 	CreateDirectoryA(audio_folder_path.c_str(), NULL);
 	CreateDirectoryA(text_folder_path.c_str(), NULL);
@@ -28,12 +31,16 @@ bool Package::SetupDataFrames(const std::string& folder_path, int flags)
 	CreateDirectoryA(bungie_folder_path.c_str(), NULL);
 	CreateDirectoryA(movie_folder_path.c_str(), NULL);
 	CreateDirectoryA(bnk_folder_path.c_str(), NULL);
+	CreateDirectoryW(items_folder_path.c_str(), NULL);
 
-	for (const auto& entry : entry_table)
+
+	for (int i = entry_table.size() - 1; i >= 0; i--)
 	{
+		const auto& entry = entry_table[i];
+
 		if ((flags & SETUP_AUDIO) && entry.type == 26 && entry.subtype == 7)
 		{
-			//mAudio.Export(entry, audio_folder_path);
+			mAudio.Export(entry, audio_folder_path);
 		}
 		else if ((flags & SETUP_TEXTURE) && entry.type == 32 && entry.subtype >= 1 && entry.subtype <= 3)
 		{
@@ -41,23 +48,27 @@ bool Package::SetupDataFrames(const std::string& folder_path, int flags)
 		}
 		else if ((flags & SETUP_BNK) && entry.type == 26 && entry.subtype == 6)
 		{
-			//mBinary.Export(entry, bnk_folder_path);
+			mBinary.Export(entry, bnk_folder_path);
 		}
 		else if ((flags & SETUP_MOVIE) && entry.type == 27 && entry.subtype == 1)
 		{
-			//mBinary.Export(entry, movie_folder_path);
+			mBinary.Export(entry, movie_folder_path);
 		}
 		else if ((flags & SETUP_TEXT) && (entry.class_type == 0x808099EF || entry.class_type == 0x80809EED || entry.class_type == 0x808099F1))
 		{
-			//mText.Export(entry, text_folder_path);
+			mText.Export(entry, text_folder_path);
+		}
+		else if ((flags & SETUP_INVESTMENT) && entry.class_type == 0x8080549F)
+		{
+			mInvestment.Export(entry, items_folder_path);
 		}
 		else if ((flags & SETUP_STRUCT) && entry.class_type >> 16 == 0x8080)
 		{
-			//mBinary.Export(entry, bungie_folder_path);
+			mBinary.Export(entry, bungie_folder_path);
 		}
 		else if ((flags & SETUP_UNKNOWN))
 		{
-			//mBinary.Export(entry, unknown_folder_path);
+			mBinary.Export(entry, unknown_folder_path);
 		}
 	}
 
@@ -81,14 +92,11 @@ bool Package::SetupDataFrames(const std::string& folder_path, int flags)
 
 	if (fs::is_empty(bnk_folder_path))
 		fs::remove_all(bnk_folder_path);
-	
-	if (fs::is_empty(folder_path))
-	{
-		fs::remove_all(folder_path);
-		return false;
-	}
 
-	return true;
+	if (fs::is_empty(items_folder_path))
+		fs::remove_all(items_folder_path);
+
+	return fs::is_empty(folder_path);
 }
 
 std::unique_ptr<uint8_t[]> Package::ExtractEntry(const Entry& entry, bool force = false)
@@ -112,7 +120,7 @@ std::unique_ptr<uint8_t[]> Package::ExtractEntry(const Entry& entry, bool force 
 
 		if (!force && block.patch_id != patch_id) return nullptr;
 
-		Package* patch_package = GetPackage(package_id, block.patch_id, language_id);
+		Package* patch_package = GetPackage(uint16_t(package_id), int16_t(block.patch_id), uint16_t(language_id));
 		if (!patch_package) return nullptr;
 
 		FILE* patch_file = fopen(patch_package->GetFilePath().c_str(), "rb");
@@ -145,7 +153,7 @@ std::unique_ptr<uint8_t[]> Package::ExtractEntry(const Entry& entry, bool force 
 	return out_buffer;
 }
 
-Package::Package(const std::string& package_path) : PackageHeader(package_path), mAudio(this), mText(this), mBinary(this), mTexture(this)
+Package::Package(const std::string& package_path) : PackageHeader(package_path), mAudio(this), mText(this), mBinary(this), mTexture(this), mInvestment(this)
 {
 	nonce[0] ^= (package_id >> 8) & 0xFF;
 	nonce[11] ^= package_id & 0xFF;
@@ -189,6 +197,18 @@ Package::Package(const std::string& package_path) : PackageHeader(package_path),
 
 	package_hmap.insert({ GetHash(), this });
 	pkg_ltstptch_hmap[package_id] = std::max(pkg_ltstptch_hmap[package_id], patch_id);
+}
+
+bool Package::SetupGlobals()
+{
+	for (const auto& entry : entry_table)
+	{
+		if (entry.class_type == 0x80805A09)
+		{
+			mInvestment.SetupIndexedStrings(entry);
+		}
+	}
+	return true;
 }
 
 void Package::ClearMap()

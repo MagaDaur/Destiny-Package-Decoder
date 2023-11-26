@@ -1,19 +1,22 @@
 #pragma once
-
-#include "package_header.h"
-#include "global_structs.h"
 #include <vector>
 #include <unordered_map>
 #include <map>
 
-#define SETUP_TEXT		(1 << 0)
-#define SETUP_AUDIO		(1 << 1)
-#define SETUP_TEXTURE	(1 << 2)
-#define SETUP_STRUCT	(1 << 3)
-#define SETUP_MOVIE		(1 << 4)
-#define SETUP_BNK		(1 << 5)
-#define SETUP_UNKNOWN	(1 << 6)
-#define SETUP_ALL		0xFFFFFFFF
+#include "package_header.h"
+
+#include "memory.h"
+#include "filereference.h"
+
+#define SETUP_TEXT			(1 << 0)
+#define SETUP_AUDIO			(1 << 1)
+#define SETUP_TEXTURE		(1 << 2)
+#define SETUP_STRUCT		(1 << 3)
+#define SETUP_MOVIE			(1 << 4)
+#define SETUP_BNK			(1 << 5)
+#define SETUP_UNKNOWN		(1 << 6)
+#define SETUP_INVESTMENT	(1 << 7)
+#define SETUP_ALL			0xFFFFFFFF
 
 class Package;
 
@@ -31,6 +34,7 @@ class Package : public PackageHeader
 public:
 	Package(const std::string&);
 
+	bool SetupGlobals();
 	bool SetupDataFrames(const std::string& folder_path, int flags = SETUP_ALL);
 
 	Entry* GetEntry(uint32_t idx)
@@ -67,11 +71,10 @@ public:
 		return un_block_ptr<T>(reinterpret_cast<T*>(ExtractEntry(entry, force).release()));
 	};
 
-	template<class T>
-	static const HashContainer* GetHashContainer(const FileReference64<T>& reference)
+	static const HashContainer* GetHashContainer(uint64_t reference)
 	{
-		if (hashtag_hmap.find(reference.GetTag()) == hashtag_hmap.end()) return nullptr;
-		return &hashtag_hmap.at(reference.GetTag());
+		if (hashtag_hmap.find(reference) == hashtag_hmap.end()) return nullptr;
+		return &hashtag_hmap.at(reference);
 	}
 
 	static uint64_t MakeHash(uint64_t package_id, int64_t patch_id = -1, uint64_t language_id = 0) {
@@ -80,6 +83,8 @@ public:
 	};
 
 	static void ClearMap();
+
+	friend struct D2_StrIndexRef;
 protected:
 	std::vector<Entry> entry_table;
 	std::vector<Block> block_table;
@@ -100,9 +105,9 @@ protected:
 
 		bool Export(const Entry&, const std::string&, bool force = false);
 	private:
-		static inline std::map<uint32_t, std::u8string> string_hmap;
 
-		static inline std::vector<FileReference64<D2Class_EF998080>> indexed_investment_strings;
+		static inline std::map<uint32_t, std::wstring> string_hmap;
+		
 	};
 
 	class BinaryModule : PackageModule
@@ -123,10 +128,31 @@ protected:
 	private:
 	};
 
+	class InvestmentModule : PackageModule
+	{
+		friend struct D2Class_EF998080;
+	public:
+		InvestmentModule(Package* pkg) : PackageModule(pkg) {};
+
+		bool Export(const Entry&, const std::wstring&, bool force = false);
+
+		void SetupIndexedStrings(const Entry&);
+
+		static FileReference64<D2Class_EF998080>* GetStringContainerByIndex(uint32_t index)
+		{
+			if (index >= indexed_strings.size()) return nullptr;
+			return &indexed_strings[index];
+		}
+	private:
+		static inline time_t timestamp = 1698924679;
+		static inline std::vector<FileReference64<D2Class_EF998080>> indexed_strings;
+	};
+
 	AudioModule mAudio;
 	TextModule mText;
 	BinaryModule mBinary;
 	TextureModule mTexture;
+	InvestmentModule mInvestment;
 
 private:
 	static inline std::unordered_map<uint64_t, HashContainer> hashtag_hmap;

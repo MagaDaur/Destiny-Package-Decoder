@@ -5,10 +5,6 @@
       <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
       <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
     </Filter>
-    <Filter Include="Header Files">
-      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
-    </Filter>
     <Filter Include="Resource Files">
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
@@ -30,6 +26,12 @@
     </Filter>
     <Filter Include="TextureModule">
       <UniqueIdentifier>{04aba524-4136-45dd-b78e-a30fcf6dcf7b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="globals">
+      <UniqueIdentifier>{ffe2a57c-c14e-4502-8be1-6a2a6cca72d1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Investment">
+      <UniqueIdentifier>{5b101f1d-3dd8-4fb4-bd4a-3f624ca4c3c2}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -72,8 +74,8 @@
     <ClCompile Include="BinaryModule.cpp">
       <Filter>BinaryModule</Filter>
     </ClCompile>
-    <ClCompile Include="global_structs.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="InvestmentModule.cpp">
+      <Filter>Investment</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -104,8 +106,17 @@
     <ClInclude Include="text_structs.h">
       <Filter>TextModule</Filter>
     </ClInclude>
-    <ClInclude Include="global_structs.h">
-      <Filter>Source Files</Filter>
+    <ClInclude Include="memory.h">
+      <Filter>globals</Filter>
+    </ClInclude>
+    <ClInclude Include="filereference.h">
+      <Filter>globals</Filter>
+    </ClInclude>
+    <ClInclude Include="d2class.h">
+      <Filter>globals</Filter>
+    </ClInclude>
+    <ClInclude Include="investment_structs.h">
+      <Filter>Investment</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

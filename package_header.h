@@ -4,6 +4,13 @@
 #include <cstdint>
 #include <string>
 
+namespace Helpers
+{
+	std::string to_hex(uint64_t);
+	std::wstring to_wstring(std::string);
+	std::u8string to_u8string(std::string);
+}
+
 const uint32_t package_header_size = 0x130;
 
 class PackageHeader

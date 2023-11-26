@@ -142,6 +142,7 @@
     <ClCompile Include="AudioModule.cpp" />
     <ClCompile Include="audio_structs.h" />
     <ClCompile Include="BinaryModule.cpp" />
+    <ClCompile Include="InvestmentModule.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Models.cpp" />
     <ClCompile Include="OodleDecompress.cpp" />
@@ -154,7 +155,10 @@
     <ClCompile Include="IndexBuffer.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="global_structs.h" />
+    <ClInclude Include="d2class.h" />
+    <ClInclude Include="filereference.h" />
+    <ClInclude Include="investment_structs.h" />
+    <ClInclude Include="memory.h" />
     <ClInclude Include="Models.h" />
     <ClInclude Include="OodleDecompress.h" />
     <ClInclude Include="package.h" />

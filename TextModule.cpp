@@ -15,10 +15,7 @@ bool Package::TextModule::Export(const Entry& entry, const std::string& output_f
 
 		for (int i = 0; i < std::min(string_hashes.size(), string_buffer.size()); i++)
 		{
-			std::u8string str; str.resize(string_buffer[i]->byte_length);
-			memcpy(str.data(), string_buffer[i]->get_string(), string_buffer[i]->byte_length);
-
-			string_hmap.insert({ string_hashes[i]->string_hash, str });
+			string_hmap.insert({ string_hashes[i]->string_hash, string_buffer[i]->get_string() });
 		}
 	}
 	else if (entry.class_type == 0x808099F1)
@@ -31,3 +28,4 @@ bool Package::TextModule::Export(const Entry& entry, const std::string& output_f
 	}
 	return true;
 }
+

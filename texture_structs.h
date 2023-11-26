@@ -1,7 +1,6 @@
 #pragma once
 
 #include <DirectXTex.h>
-#include "global_structs.h"
 
 using namespace DirectX;
 

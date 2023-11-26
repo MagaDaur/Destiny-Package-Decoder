@@ -1,6 +1,7 @@
 #include "package_header.h"
+
 #include <cstdio>
-#include "global_structs.h"
+#include <sstream>
  
 PackageHeader::PackageHeader(const std::string& package_path) : package_path(package_path)
 {
@@ -36,4 +37,9 @@ std::string Helpers::to_hex(uint64_t n)
 std::wstring Helpers::to_wstring(std::string src)
 {
 	return std::wstring(src.begin(), src.end());
+}
+
+std::u8string Helpers::to_u8string(std::string src)
+{
+	return std::u8string(src.begin(), src.end());
 }

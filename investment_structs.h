@@ -64,11 +64,33 @@ struct D2_StrIndexRef
 	};
 };
 
+struct D2Class_EF548080
+{
+	D2_StrIndexRef destructionTerm;
+
+	uint32_t unk1;
+	uint32_t unk_hash1;
+	uint32_t unk2;
+	uint32_t unk_hash2;
+	uint32_t unk3;
+};
+
+struct D2Class_CF548080
+{
+	D2_StrIndexRef unk_str;
+};
+
 struct D2Class_9F548080
 {
-	uint64_t filesize;
+	uint64_t filesize; // 0x0
 
-	uint8_t pad1[0x80];
+	D2_RelativeOffset<D2Class_EF548080> psDestruction;
+
+	uint8_t pad1[0x50];
+
+	D2_RelativeOffset<D2Class_CF548080> ps_unk1;
+
+	uint8_t pad2[0x20];
 
 	uint16_t icon_index;
 
@@ -84,5 +106,5 @@ struct D2Class_9F548080
 
 	D2_StrIndexRef displaySource;
 
-	D2_StrIndexRef item_lore;
+	D2_StrIndexRef flavorText;
 };

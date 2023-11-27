@@ -13,11 +13,14 @@ bool Package::InvestmentModule::Export(const Entry& entry, const std::wstring& o
 
 	auto item_name = std::regex_replace(buffer->item_name.get_string(), reg, L"-");
 	auto item_type = std::regex_replace(buffer->item_type.get_string(), reg, L"-");
-	auto item_lore = buffer->item_lore.get_string();
+
+	auto item_lore = buffer->flavorText.get_string();
 
 	auto display_source = buffer->displaySource.get_string();
 
-	if (item_lore.size() == 0 || display_source.size() == 0) return false; // fix invalid characters in folder path
+	//if (item_lore.size() == 0 || display_source.size() == 0) return false;
+
+	if (item_name != L"Некробездна") return false;
 
 	auto item_folder_path = output_folder_path + L"[ " + item_type + L" ] " + item_name + L"/";
 
@@ -30,6 +33,12 @@ bool Package::InvestmentModule::Export(const Entry& entry, const std::wstring& o
 	fwrite(item_lore.data(), item_lore.size() * sizeof(wchar_t), 1, lore_file);
 
 	fclose(lore_file);
+
+	FILE* data_file = _wfopen((item_folder_path + L"data.bin").c_str(), L"wb");
+
+	fwrite(buffer.get(), entry.file_size, 1, data_file);
+
+	fclose(data_file);
 
 	return true;
 }
@@ -49,7 +58,5 @@ void Package::InvestmentModule::SetupIndexedStrings(const Entry& entry)
 	for (int i = 0; i < string_container_array.size(); i++)
 	{
 		indexed_strings[i] = string_container_array[i]->strings;
-
-		
 	}
 }

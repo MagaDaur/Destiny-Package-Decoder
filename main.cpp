@@ -41,8 +41,6 @@ int main()
 		Package* pkg = Package::GetPackage(hash);
 		auto* date_info = std::localtime(&date);
 
-		//if (date_info->tm_mday != 9 || date_info->tm_mon != 7) continue;
-
 		auto package_path = pkg->GetFilePath();
 
 		auto package_name_begin = package_path.find_last_of('/') + 1;
@@ -54,7 +52,7 @@ int main()
 
 		CreateDirectoryA(folder_path.c_str(), NULL);
 
-		if (pkg->SetupDataFrames(folder_path, SETUP_INVESTMENT))
+		if (!pkg->SetupDataFrames(folder_path, SETUP_MOVIE | SETUP_TEXTURE | SETUP_AUDIO))
 			fs::remove_all(folder_path);
 	}
 

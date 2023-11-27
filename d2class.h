@@ -28,6 +28,7 @@ struct D2_RelativeOffset
 
 	T* get()
 	{
+		if (!offset) return nullptr;
 		return (T*)(uint64_t(this) + offset);
 	};
 };

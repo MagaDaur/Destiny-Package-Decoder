@@ -48,14 +48,7 @@ bool Package::TextureModule::Export(const Entry& entry, const std::wstring& outp
 	if (FAILED(LoadFromDDSMemory(dds_texture_buffer.get(), dds_texture_size, DDS_FLAGS_NONE, &metadata, image)))
 		return false;
 
-	if (IsCompressed(metadata.format))
-	{
-		if (FAILED(Decompress(image.GetImages(), image.GetImageCount(), metadata, DXGI_FORMAT_R8G8B8A8_UNORM_SRGB, decomp)))
-			return false;
-		if (FAILED(SaveToDDSFile(decomp.GetImages(), decomp.GetImageCount(), metadata, DDS_FLAGS_NONE, file_name.c_str())))
-			return false;
-	}
-	else if (FAILED(SaveToDDSFile(image.GetImages(), image.GetImageCount(), metadata, DDS_FLAGS_NONE, file_name.c_str())))
+	if (FAILED(SaveToDDSFile(image.GetImages(), image.GetImageCount(), metadata, DDS_FLAGS_NONE, file_name.c_str())))
 		return false;
 
 	const std::wstring texconv_command = L"external\\texconv\\texconv.exe \"" + file_name + L"\" -ft PNG -srgb -nowic -o \"" + output_folder_path + L"\"";

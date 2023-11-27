@@ -1,6 +1,8 @@
 #include "package.h"
 #include "text_structs.h"
 
+#include <iostream>
+
 bool Package::TextModule::Export(const Entry& entry, const std::string& output_folder_path, bool force)
 {
 	if (entry.class_type == 0x808099EF)
@@ -9,6 +11,7 @@ bool Package::TextModule::Export(const Entry& entry, const std::string& output_f
 		if (!string_container_info) return false;
 
 		auto string_container = string_container_info->string_container[12].get_data();
+		auto entry = string_container_info->string_container[12].get_entry();
 
 		auto string_hashes = string_container_info->string_hashes.get();
 		auto string_buffer = string_container->strings.get();

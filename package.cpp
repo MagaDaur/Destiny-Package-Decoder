@@ -34,10 +34,8 @@ bool Package::SetupDataFrames(const std::string& folder_path, int flags)
 	CreateDirectoryW(items_folder_path.c_str(), NULL);
 
 
-	for (int i = entry_table.size() - 1; i >= 0; i--)
+	for (const auto& entry : entry_table)
 	{
-		const auto& entry = entry_table[i];
-
 		if ((flags & SETUP_AUDIO) && entry.type == 26 && entry.subtype == 7)
 		{
 			mAudio.Export(entry, audio_folder_path);
@@ -96,7 +94,7 @@ bool Package::SetupDataFrames(const std::string& folder_path, int flags)
 	if (fs::is_empty(items_folder_path))
 		fs::remove_all(items_folder_path);
 
-	return fs::is_empty(folder_path);
+	return !fs::is_empty(folder_path);
 }
 
 std::unique_ptr<uint8_t[]> Package::ExtractEntry(const Entry& entry, bool force = false)

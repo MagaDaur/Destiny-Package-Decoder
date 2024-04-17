@@ -82,7 +82,7 @@ struct D2Class_CF548080
 
 struct D2Class_9F548080
 {
-	uint64_t filesize; // 0x0
+	uint64_t filesize;
 
 	D2_RelativeOffset<D2Class_EF548080> psDestruction;
 
@@ -107,4 +107,72 @@ struct D2Class_9F548080
 	D2_StrIndexRef displaySource;
 
 	D2_StrIndexRef flavorText;
+};
+
+struct D2Class_D53E8080
+{
+	FileReference<uint8_t[]> texture_ref;
+};
+
+struct D2Class_D23E8080
+{
+	D2_Array<D2Class_D53E8080> texture_list;
+};
+
+struct D2Class_CD3E8080
+{
+	D2_Array<D2Class_D23E8080> texture_matrix;
+
+	uint64_t unk[2];
+};
+
+struct D2Class_CF3E8080
+{
+	uint64_t filesize;
+	uint64_t unk1;
+
+	D2_RelativeOffset<D2Class_CD3E8080> ref_texture_matrix;
+};
+
+struct D2Class_B83E8080
+{
+	uint64_t filesize;
+	uint64_t unk1;
+
+	uint32_t unk_hash1;
+
+	FileReference<D2Class_CF3E8080> icons_info_array[7];
+
+	float unk_vec4[4];
+
+	std::vector<FileReference<D2Class_CF3E8080>*> get_valid_icons()
+	{
+		std::vector<FileReference<D2Class_CF3E8080>*> ret;
+		for (auto& icon_info : icons_info_array)
+		{
+			if (icon_info.valid())
+			{
+				ret.push_back(&icon_info);
+			}
+		}
+		return ret;
+	}
+};
+
+struct D2Class_075A8080
+{
+	uint32_t item_hash;
+
+	uint8_t pad1[0xC];
+
+	FileReference<D2Class_B83E8080> icon_container;
+
+	uint8_t pad2[0xC];
+};
+
+struct D2Class_015A8080
+{
+	uint64_t filesize;
+
+	D2_Array<D2Class_075A8080> icon_ref_container;
 };

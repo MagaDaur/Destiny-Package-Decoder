@@ -139,6 +139,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="ActivityModule.cpp" />
+    <ClCompile Include="activity_structs.h" />
     <ClCompile Include="AudioModule.cpp" />
     <ClCompile Include="audio_structs.h" />
     <ClCompile Include="BinaryModule.cpp" />
@@ -176,6 +178,8 @@
   <ImportGroup Label="ExtensionTargets">
     <Import Project="packages\directxtex_uwp.2023.6.14.1\build\native\directxtex_uwp.targets" Condition="Exists('packages\directxtex_uwp.2023.6.14.1\build\native\directxtex_uwp.targets')" />
     <Import Project="packages\TeximpNet.1.4.3\build\TeximpNet.targets" Condition="Exists('packages\TeximpNet.1.4.3\build\TeximpNet.targets')" />
+    <Import Project="packages\jsoncpp.redist.0.6.0.1\build\native\jsoncpp.redist.targets" Condition="Exists('packages\jsoncpp.redist.0.6.0.1\build\native\jsoncpp.redist.targets')" />
+    <Import Project="packages\jsoncpp.0.6.0.1\build\native\jsoncpp.targets" Condition="Exists('packages\jsoncpp.0.6.0.1\build\native\jsoncpp.targets')" />
   </ImportGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
@@ -183,5 +187,7 @@
     </PropertyGroup>
     <Error Condition="!Exists('packages\directxtex_uwp.2023.6.14.1\build\native\directxtex_uwp.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\directxtex_uwp.2023.6.14.1\build\native\directxtex_uwp.targets'))" />
     <Error Condition="!Exists('packages\TeximpNet.1.4.3\build\TeximpNet.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\TeximpNet.1.4.3\build\TeximpNet.targets'))" />
+    <Error Condition="!Exists('packages\jsoncpp.redist.0.6.0.1\build\native\jsoncpp.redist.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\jsoncpp.redist.0.6.0.1\build\native\jsoncpp.redist.targets'))" />
+    <Error Condition="!Exists('packages\jsoncpp.0.6.0.1\build\native\jsoncpp.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\jsoncpp.0.6.0.1\build\native\jsoncpp.targets'))" />
   </Target>
 </Project>

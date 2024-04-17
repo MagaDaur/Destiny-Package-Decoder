@@ -16,6 +16,8 @@
 #define SETUP_BNK			(1 << 5)
 #define SETUP_UNKNOWN		(1 << 6)
 #define SETUP_INVESTMENT	(1 << 7)
+#define SETUP_ACTIVITY		(1 << 8)
+#define SETUP_PATCH			SETUP_TEXT | SETUP_TEXTURE | SETUP_MOVIE
 #define SETUP_ALL			0xFFFFFFFF
 
 class Package;
@@ -85,6 +87,7 @@ public:
 	static void ClearMap();
 
 	friend struct D2_StrIndexRef;
+	friend struct StringHashReference;
 protected:
 	std::vector<Entry> entry_table;
 	std::vector<Block> block_table;
@@ -104,10 +107,10 @@ protected:
 		TextModule(Package* pkg) : PackageModule(pkg) {};
 
 		bool Export(const Entry&, const std::string&, bool force = false);
+		void SetupStringHashes(const Entry&);
 	private:
-
-		static inline std::map<uint32_t, std::wstring> string_hmap;
-		
+		friend struct StringHashReference;
+		static inline std::unordered_map<uint32_t, std::wstring> string_hmap;
 	};
 
 	class BinaryModule : PackageModule
@@ -124,28 +127,46 @@ protected:
 	public:
 		TextureModule(Package* pkg) : PackageModule(pkg) {};
 
-		bool Export(const Entry&, const std::wstring&, bool force = false);
+		bool Export(const Entry&, const std::string&, bool force = false);
 	private:
 	};
 
 	class InvestmentModule : PackageModule
 	{
 		friend struct D2Class_EF998080;
+		friend struct D2Class_B83E8080;
 	public:
 		InvestmentModule(Package* pkg) : PackageModule(pkg) {};
 
-		bool Export(const Entry&, const std::wstring&, bool force = false);
+		bool Export(const Entry&, const std::string&, bool force = false);
 
 		void SetupIndexedStrings(const Entry&);
+		void SetupIndexedIcons(const Entry&);
 
 		static FileReference64<D2Class_EF998080>* GetStringContainerByIndex(uint32_t index)
 		{
 			if (index >= indexed_strings.size()) return nullptr;
 			return &indexed_strings[index];
 		}
+
+		static FileReference<D2Class_B83E8080>* GetIconContainerByIndex(uint32_t index)
+		{
+			if (index >= indexed_icons.size()) return nullptr;
+			return &indexed_icons[index];
+		}
 	private:
-		static inline time_t timestamp = 1698924679;
+		static inline std::vector<FileReference<D2Class_B83E8080>> indexed_icons;
 		static inline std::vector<FileReference64<D2Class_EF998080>> indexed_strings;
+	};
+
+	class ActivityModule : PackageModule
+	{
+	public:
+		ActivityModule(Package* pkg) : PackageModule(pkg) {};
+
+		bool Export(const Entry&, const std::string&, bool force = false);
+
+
 	};
 
 	AudioModule mAudio;
@@ -153,6 +174,7 @@ protected:
 	BinaryModule mBinary;
 	TextureModule mTexture;
 	InvestmentModule mInvestment;
+	ActivityModule mActivity;
 
 private:
 	static inline std::unordered_map<uint64_t, HashContainer> hashtag_hmap;

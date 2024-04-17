@@ -17,25 +17,34 @@ bool Package::SetupDataFrames(const std::string& folder_path, int flags)
 
 	const std::string audio_folder_path		= (folder_path + "audio/");
 	const std::string text_folder_path		= (folder_path + "text/");
-	const std::wstring texture_folder_path	= Helpers::to_wstring(folder_path + "image/");
+	const std::string texture_folder_path	= (folder_path + "image/");
 	const std::string unknown_folder_path	= (folder_path + "unknown/");
 	const std::string bungie_folder_path	= (folder_path + "bungie/");
 	const std::string movie_folder_path		= (folder_path + "movie/");
 	const std::string bnk_folder_path		= (folder_path + "bnk/");
-	const std::wstring items_folder_path	= Helpers::to_wstring(folder_path + "items/");
+	const std::string items_folder_path		= (folder_path + "items/");
+	const std::string activity_folder_path  = (folder_path + "activities/");
 
 	CreateDirectoryA(audio_folder_path.c_str(), NULL);
 	CreateDirectoryA(text_folder_path.c_str(), NULL);
-	CreateDirectoryW(texture_folder_path.c_str(), NULL);
+	CreateDirectoryA(texture_folder_path.c_str(), NULL);
 	CreateDirectoryA(unknown_folder_path.c_str(), NULL);
 	CreateDirectoryA(bungie_folder_path.c_str(), NULL);
 	CreateDirectoryA(movie_folder_path.c_str(), NULL);
 	CreateDirectoryA(bnk_folder_path.c_str(), NULL);
-	CreateDirectoryW(items_folder_path.c_str(), NULL);
+	CreateDirectoryA(items_folder_path.c_str(), NULL);
+	CreateDirectoryA(activity_folder_path.c_str(), NULL);
 
-
-	for (const auto& entry : entry_table)
+	for (auto it = entry_table.rbegin(); it != entry_table.rend(); it++)
 	{
+		auto& entry = *it;
+
+		if ((flags & SETUP_ACTIVITY) && entry.class_type == 0x80808E8E)
+		{
+			mActivity.Export(entry, bungie_folder_path);
+			//mBinary.Export(entry, activity_folder_path);
+		}
+
 		if ((flags & SETUP_AUDIO) && entry.type == 26 && entry.subtype == 7)
 		{
 			mAudio.Export(entry, audio_folder_path);
@@ -94,6 +103,9 @@ bool Package::SetupDataFrames(const std::string& folder_path, int flags)
 	if (fs::is_empty(items_folder_path))
 		fs::remove_all(items_folder_path);
 
+	if (fs::is_empty(activity_folder_path))
+		fs::remove_all(activity_folder_path);
+
 	return !fs::is_empty(folder_path);
 }
 
@@ -151,7 +163,7 @@ std::unique_ptr<uint8_t[]> Package::ExtractEntry(const Entry& entry, bool force 
 	return out_buffer;
 }
 
-Package::Package(const std::string& package_path) : PackageHeader(package_path), mAudio(this), mText(this), mBinary(this), mTexture(this), mInvestment(this)
+Package::Package(const std::string& package_path) : PackageHeader(package_path), mAudio(this), mText(this), mBinary(this), mTexture(this), mInvestment(this), mActivity(this)
 {
 	nonce[0] ^= (package_id >> 8) & 0xFF;
 	nonce[11] ^= package_id & 0xFF;
@@ -204,6 +216,14 @@ bool Package::SetupGlobals()
 		if (entry.class_type == 0x80805A09)
 		{
 			mInvestment.SetupIndexedStrings(entry);
+		}
+		if (entry.class_type == 0x80805A01)
+		{
+			mInvestment.SetupIndexedIcons(entry);
+		}
+		if (entry.class_type == 0x808099EF)
+		{
+			mText.SetupStringHashes(entry);
 		}
 	}
 	return true;

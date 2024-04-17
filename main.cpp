@@ -43,6 +43,10 @@ int main()
 
 		auto package_path = pkg->GetFilePath();
 
+		//if (package_path.find("_gear_") != std::string::npos) continue;
+		//if (package_path.find("_sandbox_") != std::string::npos) continue;
+		//if (package_path.find("_investment_globals_") == std::string::npos) continue;
+
 		auto package_name_begin = package_path.find_last_of('/') + 1;
 		auto package_name_end = package_path.find_last_of('.');
 		auto package_name = package_path.substr(package_name_begin, package_name_end - package_name_begin);
@@ -50,9 +54,11 @@ int main()
 		const std::string package_date = "[ " + std::to_string(date_info->tm_mday) + "." + std::to_string(date_info->tm_mon + 1) + "." + std::to_string(date_info->tm_year + 1900) + " ] ";
 		const std::string folder_path = output_folder_path + package_date + package_name + "/";
 
+		if (fs::exists(folder_path)) continue;
+
 		CreateDirectoryA(folder_path.c_str(), NULL);
 
-		if (!pkg->SetupDataFrames(folder_path, SETUP_MOVIE | SETUP_TEXTURE | SETUP_AUDIO))
+		if (!pkg->SetupDataFrames( folder_path, SETUP_ACTIVITY ))
 			fs::remove_all(folder_path);
 	}
 

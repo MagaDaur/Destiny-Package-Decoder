@@ -32,3 +32,8 @@ struct D2_RelativeOffset
 		return (T*)(uint64_t(this) + offset);
 	};
 };
+
+struct D2_TempDummyStruct
+{
+
+};

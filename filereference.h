@@ -5,7 +5,7 @@
 
 class Package;
 
-#include "filereference.h"
+
 #include "package_header.h"
 #include "package.h"
 
@@ -13,7 +13,10 @@ template<class T>
 class FileReference
 {
 public:
+	FileReference() : tag(0) {};
 	FileReference(uint32_t tag) : tag(tag) {};
+
+	bool valid() const { return tag && tag != 0xffffffff; };
 
 	uint16_t get_package_id() const { return ((tag >> 13) & 0x3FF) + (((tag >> 23) & 0x3) - 1) * 0x400; };
 
@@ -21,7 +24,7 @@ public:
 
 	un_block_ptr<T> get_data() const
 	{
-		if (!tag || tag == 0xffffffff) return nullptr;
+		if (!valid()) return nullptr;
 		return Package::ExtractEntry<T>(*this, true);
 	};
 
@@ -40,8 +43,7 @@ public:
 		return temp;
 	};
 
-private:
-	const uint32_t tag;
+	uint32_t tag;
 };
 
 template<class T>
@@ -62,7 +64,7 @@ public:
 
 	un_block_ptr<T> get_data()
 	{
-		if (!tag64 || tag64 == 0xffffffff) return nullptr;
+		if (!tag64 || tag64 == -1) return nullptr;
 		return GetTag32().get_data();
 	}
 

@@ -33,6 +33,9 @@
     <Filter Include="Investment">
       <UniqueIdentifier>{5b101f1d-3dd8-4fb4-bd4a-3f624ca4c3c2}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Activities">
+      <UniqueIdentifier>{32d75a15-b15e-47fe-b113-3fd6841fe20c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -76,6 +79,12 @@
     </ClCompile>
     <ClCompile Include="InvestmentModule.cpp">
       <Filter>Investment</Filter>
+    </ClCompile>
+    <ClCompile Include="activity_structs.h">
+      <Filter>Activities</Filter>
+    </ClCompile>
+    <ClCompile Include="ActivityModule.cpp">
+      <Filter>Activities</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

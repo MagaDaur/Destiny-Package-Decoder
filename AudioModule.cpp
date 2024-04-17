@@ -3,6 +3,8 @@
 
 bool Package::AudioModule::Export(const Entry& entry, const std::string& output_folder_path, bool force)
 {
+	if (pkg->package_path.find("_ru_") == std::string::npos) return false;
+
 	auto buffer = pkg->ExtractEntry(entry, force);
 	if (!buffer) return false;
 

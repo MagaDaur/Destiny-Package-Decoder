@@ -1,4 +1,5 @@
-#pragma once
+#ifndef D2CLASS_H
+#define D2CLASS_H
 
 #include <vector>
 #include <cstdint>
@@ -19,6 +20,11 @@ struct D2_Array
 			ret.push_back((T*)(base_addr + struct_size * i));
 		return ret;
 	};
+
+	uint32_t get_struct_tag()
+	{
+		return *(uint32_t*)(uint64_t(this) + offset + 0x10);
+	}
 };
 
 template <class T>
@@ -37,3 +43,5 @@ struct D2_TempDummyStruct
 {
 
 };
+
+#endif

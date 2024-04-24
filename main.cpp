@@ -1,22 +1,19 @@
 #include "package.h"
 #include "OodleDecompress.h"
 #include <filesystem>
-#include <memory>
-#include <iostream>
-#include "text_structs.h"
 
 namespace fs = std::filesystem;
 
 Oodle* g_pOodle = nullptr;
 
-const std::string package_folder_path = "D:\\Epic Games\\Destiny2\\packages\\";
+const std::string package_folder_path = "D:/Epic Games/Destiny2/packages/";
 const std::string output_folder_path = "D:/PackageDecoder/";
-
-using hash_time_pair = std::pair<uint64_t, time_t>;
 
 int main()
 {
 	g_pOodle = new Oodle();
+
+	CreateDirectoryA(output_folder_path.c_str(), NULL);
 
 	std::vector<hash_time_pair> v_packages{};
 
@@ -24,17 +21,27 @@ int main()
 	{
 		const std::string package_path = p.path().generic_string();
 
+		if (package_path.find("_redacted_") != std::string::npos) continue;
+		if (package_path.find("_gear_") != std::string::npos) continue;
+		if (package_path.find("_sandbox_") != std::string::npos) continue;
+
 		Package* pkg = new Package(package_path);
 
 		v_packages.push_back({ pkg->GetHash(), pkg->GetCreationDate() });
+	}
+
+	// must do this in a new loop!
+	for (auto& [hash, date] : v_packages)
+	{
+		auto pkg = Package::GetPackage(hash);
 
 		pkg->SetupGlobals();
 	}
 
 	std::sort(v_packages.begin(), v_packages.end(), [](hash_time_pair const& a, hash_time_pair const& b)
-		{
-			return a.second > b.second;
-		});
+	{
+		return a.second > b.second;
+	});
 
 	for(const auto& [hash, date] : v_packages)
 	{
@@ -43,9 +50,7 @@ int main()
 
 		auto package_path = pkg->GetFilePath();
 
-		//if (package_path.find("_gear_") != std::string::npos) continue;
-		//if (package_path.find("_sandbox_") != std::string::npos) continue;
-		//if (package_path.find("_investment_globals_") == std::string::npos) continue;
+		if (package_path.find("_02e7_") == std::string::npos) continue;
 
 		auto package_name_begin = package_path.find_last_of('/') + 1;
 		auto package_name_end = package_path.find_last_of('.');
@@ -54,11 +59,9 @@ int main()
 		const std::string package_date = "[ " + std::to_string(date_info->tm_mday) + "." + std::to_string(date_info->tm_mon + 1) + "." + std::to_string(date_info->tm_year + 1900) + " ] ";
 		const std::string folder_path = output_folder_path + package_date + package_name + "/";
 
-		if (fs::exists(folder_path)) continue;
-
 		CreateDirectoryA(folder_path.c_str(), NULL);
 
-		if (!pkg->SetupDataFrames( folder_path, SETUP_ACTIVITY ))
+		if (!pkg->ExportAll( folder_path, SETUP_INVESTMENT ))
 			fs::remove_all(folder_path);
 	}
 

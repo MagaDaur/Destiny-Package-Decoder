@@ -11,10 +11,8 @@
 
 namespace fs = std::filesystem;
 
-bool Package::SetupDataFrames(const std::string& folder_path, int flags)
+bool Package::ExportAll(const std::string& folder_path, int flags)
 {
-	if (package_path.find("_redacted_") != std::string::npos) return false;
-
 	const std::string audio_folder_path		= (folder_path + "audio/");
 	const std::string text_folder_path		= (folder_path + "text/");
 	const std::string texture_folder_path	= (folder_path + "image/");
@@ -37,17 +35,21 @@ bool Package::SetupDataFrames(const std::string& folder_path, int flags)
 
 	for (auto it = entry_table.rbegin(); it != entry_table.rend(); it++)
 	{
-		auto& entry = *it;
+		const auto& entry = *it;
 
 		if ((flags & SETUP_ACTIVITY) && entry.class_type == 0x80808E8E)
 		{
-			mActivity.Export(entry, bungie_folder_path);
+			mActivity.Export(entry, activity_folder_path);
 			//mBinary.Export(entry, activity_folder_path);
 		}
 
 		if ((flags & SETUP_AUDIO) && entry.type == 26 && entry.subtype == 7)
 		{
 			mAudio.Export(entry, audio_folder_path);
+		}
+		else if ((flags & SETUP_INVESTMENT) && entry.class_type == 0x8080799D)
+		{
+			mInvestment.Export(entry, items_folder_path);
 		}
 		else if ((flags & SETUP_TEXTURE) && entry.type == 32 && entry.subtype >= 1 && entry.subtype <= 3)
 		{
@@ -64,10 +66,6 @@ bool Package::SetupDataFrames(const std::string& folder_path, int flags)
 		else if ((flags & SETUP_TEXT) && (entry.class_type == 0x808099EF || entry.class_type == 0x80809EED || entry.class_type == 0x808099F1))
 		{
 			mText.Export(entry, text_folder_path);
-		}
-		else if ((flags & SETUP_INVESTMENT) && entry.class_type == 0x8080549F)
-		{
-			mInvestment.Export(entry, items_folder_path);
 		}
 		else if ((flags & SETUP_STRUCT) && entry.class_type >> 16 == 0x8080)
 		{
@@ -176,13 +174,9 @@ Package::Package(const std::string& package_path) : PackageHeader(package_path),
 	fseek(package, entry_table_offset, SEEK_SET);
 	for (uint32_t i = 0; i < entry_table_size; i++)
 	{
-		uint32_t entry_raw[5]{};
-		fread(entry_raw, 4, 4, package);
-		entry_raw[4] = i;
-
-		Entry entry(entry_raw);
-
-		entry_table.push_back(entry);
+		Entry::entry_raw raw{};
+		fread(&raw, 4, 4, package);
+		entry_table.push_back({raw, i});
 	}
 
 	fseek(package, block_table_offset, SEEK_SET);
@@ -221,6 +215,10 @@ bool Package::SetupGlobals()
 		{
 			mInvestment.SetupIndexedIcons(entry);
 		}
+		if (entry.class_type == 0x80805499)
+		{
+			mInvestment.SetupIndexedItems(entry);
+		}
 		if (entry.class_type == 0x808099EF)
 		{
 			mText.SetupStringHashes(entry);
@@ -231,7 +229,7 @@ bool Package::SetupGlobals()
 
 void Package::ClearMap()
 {
-	for (auto pair : package_hmap)
+	for (auto& pair : package_hmap)
 	{
 		delete pair.second;
 	}

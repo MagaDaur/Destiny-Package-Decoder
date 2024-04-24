@@ -1,13 +1,12 @@
-#pragma once
+#ifndef FILEREFERENCE_H
+#define FILEREFERENCE_H
 
 #include <cstdint>
 #include "memory.h"
 
 class Package;
-
-
-#include "package_header.h"
-#include "package.h"
+struct Entry;
+struct HashContainer;
 
 template<class T>
 class FileReference
@@ -43,6 +42,14 @@ public:
 		return temp;
 	};
 
+	bool ExportBinary(const std::string& output_folder_path)
+	{
+		Package* pkg = get_package();
+		if (!pkg) return false;
+
+		return pkg->mBinary.Export(*get_entry(), output_folder_path, true);
+	}
+
 	uint32_t tag;
 };
 
@@ -70,3 +77,5 @@ public:
 
 	uint64_t tag64;
 };
+
+#endif

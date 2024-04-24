@@ -1,6 +1,12 @@
-#pragma once
+#ifndef INVESTMENT_STRUCTS_H
+#define INVESTMENT_STRUCTS_H
 
-#include "text_structs.h"
+#include "filereference.h"
+#include "d2class.h"
+
+#include "activity_structs.h"
+
+std::vector<std::pair<Package*, Entry>> get_valid_icons(uint16_t icon_index);
 
 struct D2Class_0E5A8080
 {
@@ -25,43 +31,7 @@ struct D2_StrIndexRef
 	uint32_t container_index;
 	uint32_t hash;
 
-	std::wstring get_string()
-	{
-		if (hash == 0x811c9dc5) return L"";
-
-		auto container_ref = Package::InvestmentModule::GetStringContainerByIndex(container_index);
-		if (!container_ref)
-			return L"";
-
-		auto container_buffer = container_ref->get_data();
-		if (!container_buffer)
-			return L"";
-
-		auto container_hashes = container_buffer->string_hashes.get();
-
-		int found = -1;
-		for (int i = 0; i < container_hashes.size(); i++)
-		{
-			if (container_hashes[i]->string_hash == hash)
-			{
-				found = i;
-				break;
-			}
-		}
-
-		if (found == -1)
-			return L"";
-
-		auto string_container = container_buffer->string_container[12].get_data();
-		if (!string_container)
-			return L"";
-
-		auto string_vector = string_container->strings.get();
-		if (found >= string_vector.size())
-			return L"";
-
-		return string_vector[found]->get_string();
-	};
+	std::wstring get_string();
 };
 
 struct D2Class_EF548080
@@ -75,9 +45,11 @@ struct D2Class_EF548080
 	uint32_t unk3;
 };
 
-struct D2Class_CF548080
+struct D2Class_D0548080
 {
-	D2_StrIndexRef unk_str;
+	D2_StrIndexRef quest_name;
+	D2_StrIndexRef quest_step;
+	D2_StrIndexRef quest_vendor_line;
 };
 
 struct D2Class_9F548080
@@ -86,15 +58,15 @@ struct D2Class_9F548080
 
 	D2_RelativeOffset<D2Class_EF548080> psDestruction;
 
-	uint8_t pad1[0x50];
+	uint8_t pad1[0x48];
 
-	D2_RelativeOffset<D2Class_CF548080> ps_unk1;
+	D2_RelativeOffset<D2Class_D0548080> quest_info;
 
-	uint8_t pad2[0x20];
+	uint8_t pad2[0x28];
 
-	uint16_t icon_index;
+	uint16_t icon_index; // 0x88
 
-	uint16_t unk1;
+	uint16_t secondary_icon_index;
 
 	D2_StrIndexRef item_name;
 
@@ -102,11 +74,15 @@ struct D2Class_9F548080
 
 	D2_StrIndexRef item_type;
 
-	D2_StrIndexRef unk_str1;
+	D2_StrIndexRef completeText;
 
 	D2_StrIndexRef displaySource;
 
 	D2_StrIndexRef flavorText;
+
+	D2_Array<void> unk_array0;
+
+	uint32_t unk_hashes[6];
 };
 
 struct D2Class_D53E8080
@@ -176,3 +152,30 @@ struct D2Class_015A8080
 
 	D2_Array<D2Class_075A8080> icon_ref_container;
 };
+
+struct D2Class_9D548080
+{
+	uint32_t api_hash;
+
+	uint8_t pad0[0xC];
+
+	FileReference<D2Class_9F548080> item_string_data;
+
+	uint8_t pad1[0xC];
+};
+
+struct D2Class_99548080
+{
+	uint64_t filesize;
+
+	D2_Array<D2Class_9D548080> items;
+};
+
+struct D2Class_9D798080
+{
+	uint8_t pad0[0xA8];
+
+	uint32_t api_hash;
+};
+
+#endif

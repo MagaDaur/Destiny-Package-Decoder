@@ -1,4 +1,5 @@
-#pragma once
+#ifndef MEMORY_H
+#define MEMORY_H
 
 #include <memory>
 
@@ -13,3 +14,5 @@ struct Deleter
 
 template<class T>
 using un_block_ptr = std::unique_ptr<T, Deleter<T>>;
+
+#endif

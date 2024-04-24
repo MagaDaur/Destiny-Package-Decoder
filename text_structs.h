@@ -1,7 +1,10 @@
-#pragma once
+#ifndef TEXT_STRUCTS_H
+#define TEXT_STRUCTS_H
 
-#include "d2class.h"
 #include <filesystem>
+
+#include "filereference.h"
+#include "d2class.h"
 
 struct D2Class_F7998080 // string data
 {
@@ -78,3 +81,5 @@ struct D2Class_ED9E8080
 
 	D2_Array<D2Class_F19E8080> paths;
 };
+
+#endif

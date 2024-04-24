@@ -1,12 +1,16 @@
-#pragma once
+#ifndef PACKAGE_H
+#define PACKAGE_H
+
 #include <vector>
 #include <unordered_map>
 #include <map>
 
 #include "package_header.h"
-
 #include "memory.h"
 #include "filereference.h"
+
+#include "text_structs.h"
+#include "investment_structs.h"
 
 #define SETUP_TEXT			(1 << 0)
 #define SETUP_AUDIO			(1 << 1)
@@ -17,8 +21,9 @@
 #define SETUP_UNKNOWN		(1 << 6)
 #define SETUP_INVESTMENT	(1 << 7)
 #define SETUP_ACTIVITY		(1 << 8)
-#define SETUP_PATCH			SETUP_TEXT | SETUP_TEXTURE | SETUP_MOVIE
 #define SETUP_ALL			0xFFFFFFFF
+
+using hash_time_pair = std::pair<uint64_t, time_t>;
 
 class Package;
 
@@ -37,7 +42,7 @@ public:
 	Package(const std::string&);
 
 	bool SetupGlobals();
-	bool SetupDataFrames(const std::string& folder_path, int flags = SETUP_ALL);
+	bool ExportAll(const std::string& folder_path, int flags = SETUP_ALL);
 
 	Entry* GetEntry(uint32_t idx)
 	{
@@ -85,10 +90,7 @@ public:
 	};
 
 	static void ClearMap();
-
-	friend struct D2_StrIndexRef;
-	friend struct StringHashReference;
-protected:
+public:
 	std::vector<Entry> entry_table;
 	std::vector<Block> block_table;
 
@@ -98,7 +100,7 @@ protected:
 		AudioModule(Package* pkg) : PackageModule(pkg) {};
 
 		bool Export(const Entry&, const std::string&, bool force = false);
-	private:
+	public:
 	};
 
 	class TextModule : PackageModule
@@ -108,8 +110,7 @@ protected:
 
 		bool Export(const Entry&, const std::string&, bool force = false);
 		void SetupStringHashes(const Entry&);
-	private:
-		friend struct StringHashReference;
+	public:
 		static inline std::unordered_map<uint32_t, std::wstring> string_hmap;
 	};
 
@@ -119,7 +120,7 @@ protected:
 		BinaryModule(Package* pkg) : PackageModule(pkg) {};
 
 		bool Export(const Entry&, const std::string&, bool force = false);
-	private:
+	public:
 	};
 
 	class TextureModule : PackageModule
@@ -128,13 +129,11 @@ protected:
 		TextureModule(Package* pkg) : PackageModule(pkg) {};
 
 		bool Export(const Entry&, const std::string&, bool force = false);
-	private:
+	public:
 	};
 
 	class InvestmentModule : PackageModule
 	{
-		friend struct D2Class_EF998080;
-		friend struct D2Class_B83E8080;
 	public:
 		InvestmentModule(Package* pkg) : PackageModule(pkg) {};
 
@@ -142,6 +141,7 @@ protected:
 
 		void SetupIndexedStrings(const Entry&);
 		void SetupIndexedIcons(const Entry&);
+		void SetupIndexedItems(const Entry&);
 
 		static FileReference64<D2Class_EF998080>* GetStringContainerByIndex(uint32_t index)
 		{
@@ -154,9 +154,16 @@ protected:
 			if (index >= indexed_icons.size()) return nullptr;
 			return &indexed_icons[index];
 		}
-	private:
+
+		static FileReference<D2Class_9F548080>* GetItemContainerByHash(uint32_t hash)
+		{
+			if (indexed_items.find(hash) == indexed_items.end()) return nullptr;
+			return &indexed_items[hash];
+		}
+	public:
 		static inline std::vector<FileReference<D2Class_B83E8080>> indexed_icons;
 		static inline std::vector<FileReference64<D2Class_EF998080>> indexed_strings;
+		static inline std::unordered_map<uint32_t, FileReference<D2Class_9F548080>> indexed_items;
 	};
 
 	class ActivityModule : PackageModule
@@ -176,10 +183,12 @@ protected:
 	InvestmentModule mInvestment;
 	ActivityModule mActivity;
 
-private:
+public:
 	static inline std::unordered_map<uint64_t, HashContainer> hashtag_hmap;
-	static inline std::unordered_map<uint64_t, uint64_t> pkg_ltstptch_hmap;
+	static inline std::unordered_map<uint64_t, uint64_t> pkg_ltstptch_hmap; // package latest patch
 	static inline std::unordered_map<uint64_t, Package*> package_hmap;
 
 	uint8_t nonce[12] = { 0x84, 0xEA, 0x11, 0xC0, 0xAC, 0xAB, 0xFA, 0x20, 0x33, 0x11, 0x26, 0x99 };
 };
+
+#endif

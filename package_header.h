@@ -1,4 +1,5 @@
-#pragma once
+#ifndef PACKAGE_HEADER_H
+#define PACKAGE_HEADER_H
 
 #include <cstdio>
 #include <cstdint>
@@ -11,7 +12,7 @@ namespace Helpers
 	std::u8string to_u8string(std::string);
 }
 
-const uint32_t package_header_size = 0x130;
+static const uint32_t package_header_size = 0x130;
 
 class PackageHeader
 {
@@ -47,23 +48,31 @@ private:
 
 struct Entry
 {
-	Entry(uint32_t entry[5])
+	struct entry_raw
 	{
-		ref_entry_id = entry[0] & 0x1FFF;
-		ref_package_id = ((entry[0] >> 13) & 0x3FF) + (((entry[0] >> 23) & 0x3) - 1) * 0x400;
+		uint32_t a;
+		uint32_t b;
+		uint32_t c;
+		uint32_t d;
+	};
 
-		starting_block_index = entry[2] & 0x3FFF;
-		starting_block_offset = ((entry[2] >> 14) & 0x3FFF) << 4;
+	Entry(entry_raw entry, uint32_t entry_idx)
+	{
+		ref_entry_id = entry.a & 0x1FFF;
+		ref_package_id = ((entry.a >> 13) & 0x3FF) + (((entry.a >> 23) & 0x3) - 1) * 0x400;
 
-		file_size = (entry[3] & 0x3FFFFFF) << 4 | (entry[2] >> 28) & 0xF;
+		starting_block_index = entry.c & 0x3FFF;
+		starting_block_offset = ((entry.c >> 14) & 0x3FFF) << 4;
 
-		type = (entry[1] >> 9) & 0x7F;
+		file_size = (entry.d & 0x3FFFFFF) << 4 | (entry.c >> 28) & 0xF;
 
-		subtype = (entry[1] >> 6) & 0x7;
+		type = (entry.b >> 9) & 0x7F;
 
-		class_type = entry[0];
+		subtype = (entry.b >> 6) & 0x7;
 
-		entry_id = entry[4];
+		class_type = entry.a;
+
+		entry_id = entry_idx;
 	};
 
 	std::string GenerateName() const;
@@ -105,3 +114,5 @@ struct HashContainer
 	uint32_t tag32;
 	uint32_t class_type;
 };
+
+#endif

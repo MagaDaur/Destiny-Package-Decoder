@@ -11,5 +11,5 @@ Oodle::Oodle()
 bool Oodle::Decompress(const Block* block, unsigned char* compress_buffer, unsigned char* decompress_buffer)
 {
 	if (!OodleLZ_Decompress) return false;
-	return OodleLZ_Decompress(compress_buffer, Block::MAX_SIZE, decompress_buffer, Block::MAX_SIZE, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3);
+	return OodleLZ_Decompress(compress_buffer, block->size, decompress_buffer, Block::MAX_SIZE, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3);
 }

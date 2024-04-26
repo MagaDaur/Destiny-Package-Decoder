@@ -39,10 +39,10 @@ protected:
 class Package : public PackageHeader
 {
 public:
-	Package(const std::string&);
+	Package(const std::wstring&);
 
 	bool SetupGlobals();
-	bool ExportAll(const std::string& folder_path, int flags = SETUP_ALL);
+	bool ExportAll(const std::wstring& folder_path, int flags = SETUP_ALL);
 
 	Entry* GetEntry(uint32_t idx)
 	{
@@ -99,7 +99,7 @@ public:
 	public:
 		AudioModule(Package* pkg) : PackageModule(pkg) {};
 
-		bool Export(const Entry&, const std::string&, bool force = false);
+		bool Export(const Entry&, const std::wstring&, bool force = false);
 	public:
 	};
 
@@ -108,7 +108,7 @@ public:
 	public:
 		TextModule(Package* pkg) : PackageModule(pkg) {};
 
-		bool Export(const Entry&, const std::string&, bool force = false);
+		bool Export(const Entry&, const std::wstring&, bool force = false);
 		void SetupStringHashes(const Entry&);
 	public:
 		static inline std::unordered_map<uint32_t, std::wstring> string_hmap;
@@ -119,7 +119,7 @@ public:
 	public:
 		BinaryModule(Package* pkg) : PackageModule(pkg) {};
 
-		bool Export(const Entry&, const std::string&, bool force = false);
+		bool Export(const Entry&, const std::wstring&, bool force = false);
 	public:
 	};
 
@@ -128,7 +128,7 @@ public:
 	public:
 		TextureModule(Package* pkg) : PackageModule(pkg) {};
 
-		bool Export(const Entry&, const std::string&, bool force = false);
+		bool Export(const Entry&, const std::wstring&, bool force = false);
 	public:
 	};
 
@@ -137,7 +137,7 @@ public:
 	public:
 		InvestmentModule(Package* pkg) : PackageModule(pkg) {};
 
-		bool Export(const Entry&, const std::string&, bool force = false);
+		bool Export(const Entry&, const std::wstring&, bool force = false);
 
 		void SetupIndexedStrings(const Entry&);
 		void SetupIndexedIcons(const Entry&);
@@ -171,7 +171,7 @@ public:
 	public:
 		ActivityModule(Package* pkg) : PackageModule(pkg) {};
 
-		bool Export(const Entry&, const std::string&, bool force = false);
+		bool Export(const Entry&, const std::wstring&, bool force = false);
 
 
 	};

@@ -1,7 +1,7 @@
 #include "activity_structs.h"
 #include "package.h"
 
-bool Package::ActivityModule::Export(const Entry& entry, const std::string& output_folder_path, bool force)
+bool Package::ActivityModule::Export(const Entry& entry, const std::wstring& output_folder_path, bool force)
 {
 	if (entry.class_type == 0x80808E8E)
 	{

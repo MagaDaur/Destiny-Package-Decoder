@@ -5,10 +5,14 @@
 #include <shlobj_core.h>
 #include <Windows.h>
 
+#include <regex>
+
 #undef min
 
-bool Package::InvestmentModule::Export(const Entry& entry, const std::string& output_folder_path, bool force)
+bool Package::InvestmentModule::Export(const Entry& entry, const std::wstring& output_folder_path, bool force)
 {
+	const static std::wregex reg(L"[\\/:*?\"<>|\n]");
+
 	auto buffer = pkg->ExtractEntry<D2Class_9D798080>(entry, force);
 	if (!buffer) return false;
 
@@ -22,15 +26,14 @@ bool Package::InvestmentModule::Export(const Entry& entry, const std::string& ou
 	auto item_type = display_data_buffer->item_type.get_string();
 	auto item_flavor = display_data_buffer->flavorText.get_string();
 	auto item_source = display_data_buffer->displaySource.get_string();
-	auto quest_complete = display_data_buffer->completeText.get_string();
+	auto description = display_data_buffer->completeText.get_string();
 	auto quest_info = display_data_buffer->quest_info.get();
 
-	if (item_type != L"Эмблема") return false;
+	auto item_folder_path = output_folder_path + entry.GenerateName() + L"/";
+	if (item_name.size())
+		item_folder_path = output_folder_path + L"[ " + std::regex_replace(item_type, reg, L"-") + L" ] " + std::regex_replace(item_name, reg, L"-") + L"/";
 
-	auto item_folder_path = output_folder_path + entry.GenerateName() + "/";
-	CreateDirectoryA(item_folder_path.c_str(), NULL);
-
-	display_data_ref->ExportBinary(item_folder_path);
+	CreateDirectoryW(item_folder_path.c_str(), NULL);
 
 	auto primary_icons = get_valid_icons(display_data_buffer->icon_index);
 	auto secondary_icons = get_valid_icons(display_data_buffer->secondary_icon_index);
@@ -41,8 +44,8 @@ bool Package::InvestmentModule::Export(const Entry& entry, const std::string& ou
 	for (auto& [pkg, entry] : secondary_icons)
 		pkg->mTexture.Export(entry, item_folder_path, true);
 
-	auto file_path = item_folder_path + "info.txt";
-	FILE* file = fopen(file_path.c_str(), "w,ccs=UTF-8");
+	auto file_path = item_folder_path + L"info.txt";
+	FILE* file = _wfopen(file_path.c_str(), L"w,ccs=UTF-8");
 
 	if (item_name.size())
 	{
@@ -68,10 +71,10 @@ bool Package::InvestmentModule::Export(const Entry& entry, const std::string& ou
 		fwrite(item_source.data(), item_source.size() * sizeof(wchar_t), 1, file);
 	}
 	
-	if (quest_complete.size())
+	if (description.size())
 	{
-		quest_complete = L"Unk text: " + quest_complete + L"\n\n";
-		fwrite(quest_complete.data(), quest_complete.size() * sizeof(wchar_t), 1, file);
+		description = L"Description : " + description + L"\n\n";
+		fwrite(description.data(), description.size() * sizeof(wchar_t), 1, file);
 	}
 	
 	if (quest_info)
@@ -186,9 +189,8 @@ void Package::InvestmentModule::SetupIndexedIcons(const Entry& entry)
 
 void Package::InvestmentModule::SetupIndexedItems(const Entry& entry)
 {
-	static std::unordered_map<uint32_t, bool> cur_items;
-	static std::unordered_map<uint32_t, bool> prev_items;
-	std::unordered_map<uint32_t, bool> new_items;
+	static std::unordered_map<uint32_t, FileReference<D2Class_9F548080>> cur_items;
+	static std::unordered_map<uint32_t, FileReference<D2Class_9F548080>> prev_items;
 
 	auto buffer = pkg->ExtractEntry<D2Class_99548080>(entry, true);
 	if (!buffer) return;
@@ -196,21 +198,18 @@ void Package::InvestmentModule::SetupIndexedItems(const Entry& entry)
 	auto item_array = buffer->items.get();
 
 	prev_items = cur_items;
-
 	cur_items.clear();
+
 	for (const auto& item : item_array)
-		cur_items.insert({ item->api_hash, 1 });
+		cur_items.insert({ item->api_hash, item->item_string_data });
 
 	if (cur_items.size() == prev_items.size()) return;
 
+	indexed_items.clear();
+
 	for (const auto& [hash, ref] : cur_items)
 		if (prev_items.find(hash) == prev_items.end())
-			new_items.insert({ hash, 1 });
-
-	indexed_items.clear();
-	for (int i = 0; i < item_array.size(); i++)
-		if (new_items.find(item_array[i]->api_hash) != new_items.end())
-			indexed_items.insert({ item_array[i]->api_hash, item_array[i]->item_string_data });
+			indexed_items.insert({ hash, ref });
 }
 
 std::wstring D2_StrIndexRef::get_string()
@@ -229,14 +228,14 @@ std::wstring D2_StrIndexRef::get_string()
 	if (!string_container)
 		return L"";
 
-	auto string_buffer = string_container->strings.get();
+	auto string_parts = string_container->string_parts.get();
 	auto string_hashes = container_buffer->string_hashes.get();
 
-	for (int i = 0; i < std::min(string_hashes.size(), string_buffer.size()); i++)
+	for (int i = 0; i < string_hashes.size(); i++)
 	{
 		if (string_hashes[i]->string_hash == hash)
 		{
-			return string_buffer[i]->get_string();
+			return string_parts[i]->get_string();
 		}
 	}
 

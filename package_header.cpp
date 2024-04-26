@@ -3,9 +3,9 @@
 #include <cstdio>
 #include <sstream>
  
-PackageHeader::PackageHeader(const std::string& package_path) : package_path(package_path)
+PackageHeader::PackageHeader(const std::wstring& package_path) : package_path(package_path)
 {
-	FILE* package = fopen(package_path.c_str(), "rb");
+	FILE* package = _wfopen(package_path.c_str(), L"rb");
 
 	fread(raw_data, sizeof(char), package_header_size, package);
 

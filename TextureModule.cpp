@@ -3,12 +3,12 @@
 
 constexpr auto DDS_HEADER_SIZE = 4 + sizeof(DDS_HEADER) + sizeof(DDS_HEADER_DXT10);
 
-bool Package::TextureModule::Export(const Entry& entry, const std::string& output_folder_path, bool force)
+bool Package::TextureModule::Export(const Entry& entry, const std::wstring& output_folder_path, bool force)
 {
 	auto texture_header = pkg->ExtractEntry<TextureHeader>(entry, force);
 	if (!texture_header || texture_header->depth != 1 || texture_header->format == 0x22 || texture_header->format == 0xA) return false;
 
-	auto file_name = output_folder_path + entry.GenerateName() + ".dds";
+	auto file_name = output_folder_path + entry.GenerateName() + L".dds";
 	
 	auto dds_header_buffer = std::make_unique<uint8_t[]>(DDS_HEADER_SIZE);
 	auto dds_header_size = GenerateDDSHeader(texture_header.get(), dds_header_buffer.get());
@@ -48,16 +48,16 @@ bool Package::TextureModule::Export(const Entry& entry, const std::string& outpu
 	if (FAILED(LoadFromDDSMemory(dds_texture_buffer.get(), dds_texture_size, DDS_FLAGS_NONE, &metadata, image)))
 		return false;
 
-	if (FAILED(SaveToDDSFile(image.GetImages(), image.GetImageCount(), metadata, DDS_FLAGS_NONE, Helpers::to_wstring(file_name).c_str())))
+	if (FAILED(SaveToDDSFile(image.GetImages(), image.GetImageCount(), metadata, DDS_FLAGS_NONE, file_name.c_str())))
 		return false;
 
 	if (texture_header->array_size == 1)
 	{
-		const std::string texconv_command = "external\\texconv\\texconv.exe \"" + file_name + "\" -ft PNG -srgb -nowic -o \"" + output_folder_path + "\"";
+		const std::wstring texconv_command = L"external\\texconv\\texconv.exe \"" + file_name + L"\" -ft PNG -srgb -nowic -o \"" + output_folder_path + L"\"";
 
-		system(texconv_command.c_str());
+		_wsystem(texconv_command.c_str());
 
-		DeleteFileA(file_name.c_str());
+		DeleteFileW(file_name.c_str());
 	}
 
 	return true;

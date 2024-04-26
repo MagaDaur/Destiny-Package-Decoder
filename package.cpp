@@ -11,27 +11,27 @@
 
 namespace fs = std::filesystem;
 
-bool Package::ExportAll(const std::string& folder_path, int flags)
+bool Package::ExportAll(const std::wstring& folder_path, int flags)
 {
-	const std::string audio_folder_path		= (folder_path + "audio/");
-	const std::string text_folder_path		= (folder_path + "text/");
-	const std::string texture_folder_path	= (folder_path + "image/");
-	const std::string unknown_folder_path	= (folder_path + "unknown/");
-	const std::string bungie_folder_path	= (folder_path + "bungie/");
-	const std::string movie_folder_path		= (folder_path + "movie/");
-	const std::string bnk_folder_path		= (folder_path + "bnk/");
-	const std::string items_folder_path		= (folder_path + "items/");
-	const std::string activity_folder_path  = (folder_path + "activities/");
+	const auto audio_folder_path	= (folder_path + L"audio/");
+	const auto text_folder_path		= (folder_path + L"text/");
+	const auto texture_folder_path	= (folder_path + L"image/");
+	const auto unknown_folder_path	= (folder_path + L"unknown/");
+	const auto bungie_folder_path	= (folder_path + L"bungie/");
+	const auto movie_folder_path	= (folder_path + L"movie/");
+	const auto bnk_folder_path		= (folder_path + L"bnk/");
+	const auto items_folder_path	= (folder_path + L"items/");
+	const auto activity_folder_path = (folder_path + L"activities/");
 
-	CreateDirectoryA(audio_folder_path.c_str(), NULL);
-	CreateDirectoryA(text_folder_path.c_str(), NULL);
-	CreateDirectoryA(texture_folder_path.c_str(), NULL);
-	CreateDirectoryA(unknown_folder_path.c_str(), NULL);
-	CreateDirectoryA(bungie_folder_path.c_str(), NULL);
-	CreateDirectoryA(movie_folder_path.c_str(), NULL);
-	CreateDirectoryA(bnk_folder_path.c_str(), NULL);
-	CreateDirectoryA(items_folder_path.c_str(), NULL);
-	CreateDirectoryA(activity_folder_path.c_str(), NULL);
+	CreateDirectoryW(audio_folder_path.c_str(), NULL);
+	CreateDirectoryW(text_folder_path.c_str(), NULL);
+	CreateDirectoryW(texture_folder_path.c_str(), NULL);
+	CreateDirectoryW(unknown_folder_path.c_str(), NULL);
+	CreateDirectoryW(bungie_folder_path.c_str(), NULL);
+	CreateDirectoryW(movie_folder_path.c_str(), NULL);
+	CreateDirectoryW(bnk_folder_path.c_str(), NULL);
+	CreateDirectoryW(items_folder_path.c_str(), NULL);
+	CreateDirectoryW(activity_folder_path.c_str(), NULL);
 
 	for (auto it = entry_table.rbegin(); it != entry_table.rend(); it++)
 	{
@@ -131,7 +131,7 @@ std::unique_ptr<uint8_t[]> Package::ExtractEntry(const Entry& entry, bool force 
 		Package* patch_package = GetPackage(uint16_t(package_id), int16_t(block.patch_id), uint16_t(language_id));
 		if (!patch_package) return nullptr;
 
-		FILE* patch_file = fopen(patch_package->GetFilePath().c_str(), "rb");
+		FILE* patch_file = _wfopen(patch_package->GetFilePath().c_str(), L"rb");
 		if (!patch_file) return nullptr;
 
 		fseek(patch_file, block.offset, SEEK_SET);
@@ -161,12 +161,12 @@ std::unique_ptr<uint8_t[]> Package::ExtractEntry(const Entry& entry, bool force 
 	return out_buffer;
 }
 
-Package::Package(const std::string& package_path) : PackageHeader(package_path), mAudio(this), mText(this), mBinary(this), mTexture(this), mInvestment(this), mActivity(this)
+Package::Package(const std::wstring& package_path) : PackageHeader(package_path), mAudio(this), mText(this), mBinary(this), mTexture(this), mInvestment(this), mActivity(this)
 {
 	nonce[0] ^= (package_id >> 8) & 0xFF;
 	nonce[11] ^= package_id & 0xFF;
 
-	FILE* package = fopen(package_path.c_str(), "rb");
+	FILE* package = _wfopen(package_path.c_str(), L"rb");
 
 	entry_table.reserve(entry_table_size);
 	block_table.reserve(block_table_size);
@@ -244,8 +244,8 @@ Package* Package::GetPackage(const uint16_t& package_id, const int16_t& patch_id
 	return package_hmap.at(package_hash);
 }
 
-std::string Entry::GenerateName() const
+std::wstring Entry::GenerateName() const
 {
-	std::stringstream ss; ss << std::hex << std::uppercase << class_type;
-	return std::to_string(entry_id) + "_" + ss.str();
+	std::wstringstream ss; ss << std::hex << std::uppercase << class_type;
+	return std::to_wstring(entry_id) + L"_" + ss.str();
 }

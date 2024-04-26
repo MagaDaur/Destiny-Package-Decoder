@@ -35,11 +35,36 @@ struct D2Class_70008080
 	uint32_t string_hash;
 };
 
+struct D2Class_F5998080
+{
+	D2_RelativeOffset<D2Class_F7998080> string_part;
+	uint64_t part_count;
+
+	std::wstring get_string()
+	{
+		std::wstring ret;
+		auto base = string_part.get();
+		if (!base) return L"";
+
+		for (int i = 0; i < part_count; i++)
+		{
+			auto part = (base + i);
+			ret += part->get_string();
+		}
+
+		return ret;
+	}
+};
+
 struct D2Class_F1998080
 {
 	uint64_t filesize; // 0x0
 
 	D2_Array<D2Class_F7998080> strings; // 0x8
+
+	uint8_t pad0[0x20];
+
+	D2_Array<D2Class_F5998080> string_parts;
 };
 
 struct D2Class_EF998080

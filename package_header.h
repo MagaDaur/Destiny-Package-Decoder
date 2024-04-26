@@ -17,10 +17,10 @@ static const uint32_t package_header_size = 0x130;
 class PackageHeader
 {
 public:
-	PackageHeader(const std::string&);
+	PackageHeader(const std::wstring&);
 
 	time_t GetCreationDate() { return timestamp; };
-	std::string GetFilePath() { return package_path; };
+	std::wstring GetFilePath() { return package_path; };
 
 	uint64_t GetHash() { return package_id | (patch_id << 16) | (language_id << 32); };
 
@@ -40,7 +40,7 @@ protected:
 	uint32_t hash64_table_size;
 	uint32_t hash64_table_offset;
 
-	const std::string package_path;
+	const std::wstring package_path;
 
 private:
 	uint8_t raw_data[package_header_size];
@@ -75,7 +75,7 @@ struct Entry
 		entry_id = entry_idx;
 	};
 
-	std::string GenerateName() const;
+	std::wstring GenerateName() const;
 
 	uint32_t type;
 	uint32_t subtype;

@@ -53,7 +53,7 @@ bool Package::TextureModule::Export(const Entry& entry, const std::wstring& outp
 
 	if (texture_header->array_size == 1)
 	{
-		const std::wstring texconv_command = L"external\\texconv\\texconv.exe \"" + file_name + L"\" -ft PNG -srgb -nowic -o \"" + output_folder_path + L"\"";
+		const std::wstring texconv_command = L"external\\texconv\\texconv.exe \"" + file_name + L"\" -ft PNG -nowic -o \"" + output_folder_path + L"\"";
 
 		_wsystem(texconv_command.c_str());
 

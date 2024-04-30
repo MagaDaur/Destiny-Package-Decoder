@@ -9,6 +9,8 @@
 
 #undef min
 
+std::vector<std::pair<Package*, Entry>> get_valid_icons(uint16_t icon_index);
+
 bool Package::InvestmentModule::Export(const Entry& entry, const std::wstring& output_folder_path, bool force)
 {
 	const static std::wregex reg(L"[\\/:*?\"<>|\n]");
@@ -31,7 +33,12 @@ bool Package::InvestmentModule::Export(const Entry& entry, const std::wstring& o
 
 	auto item_folder_path = output_folder_path + entry.GenerateName() + L"/";
 	if (item_name.size())
-		item_folder_path = output_folder_path + L"[ " + std::regex_replace(item_type, reg, L"-") + L" ] " + std::regex_replace(item_name, reg, L"-") + L"/";
+		item_folder_path = output_folder_path
+		+ L"[ " + std::regex_replace(item_type, reg, L"-") + L" ] "
+		+ std::regex_replace(item_name, reg, L"-") + L" "
+		+ std::to_wstring(buffer->api_hash) + L" "
+		+ std::to_wstring(entry.entry_id)
+		+ L"/";
 
 	CreateDirectoryW(item_folder_path.c_str(), NULL);
 
@@ -106,6 +113,36 @@ bool Package::InvestmentModule::Export(const Entry& entry, const std::wstring& o
 	return true;
 }
 
+std::wstring D2_StrIndexRef::get_string()
+{
+	if (hash == 0x811c9dc5) return L"";
+
+	auto container_ref = Package::InvestmentModule::GetStringContainerByIndex(container_index);
+	if (!container_ref)
+		return L"";
+
+	auto container_buffer = container_ref->get_data();
+	if (!container_buffer)
+		return L"";
+
+	auto string_container = container_buffer->string_container[12].get_data();
+	if (!string_container)
+		return L"";
+
+	auto string_parts = string_container->string_parts.get();
+	auto string_hashes = container_buffer->string_hashes.get();
+
+	for (int i = 0; i < string_hashes.size(); i++)
+	{
+		if (string_hashes[i]->string_hash == hash)
+		{
+			return string_parts[i]->get_string();
+		}
+	}
+
+	return L"";
+};
+
 std::vector<std::pair<Package*, Entry>> get_valid_icons(uint16_t icon_index)
 {
 	auto ref_icon_container = Package::InvestmentModule::GetIconContainerByIndex(icon_index);
@@ -148,17 +185,13 @@ std::vector<std::pair<Package*, Entry>> get_valid_icons(uint16_t icon_index)
 
 void Package::InvestmentModule::SetupIndexedStrings(const Entry& entry)
 {
-	static time_t timestamp = 1698924679;
+	if (indexed_strings.size()) return;
 
-	if (pkg->GetCreationDate() < timestamp) return;
-	timestamp = pkg->GetCreationDate();
-
-	auto buffer = pkg->ExtractEntry<D2Class_095A8080>(entry, true);
+	auto buffer = pkg->ExtractEntry<D2Class_095A8080>(entry);
 	if (!buffer) return;
 
 	auto string_container_array = buffer->string_container.get();
 
-	indexed_strings.clear();
 	indexed_strings.resize(string_container_array.size());
 	for (int i = 0; i < string_container_array.size(); i++)
 	{
@@ -168,17 +201,13 @@ void Package::InvestmentModule::SetupIndexedStrings(const Entry& entry)
 
 void Package::InvestmentModule::SetupIndexedIcons(const Entry& entry)
 {
-	static time_t timestamp = 1698924679;
+	if (indexed_icons.size()) return;
 
-	if (pkg->GetCreationDate() < timestamp) return;
-	timestamp = pkg->GetCreationDate();
-
-	auto buffer = pkg->ExtractEntry<D2Class_015A8080>(entry, true);
+	auto buffer = pkg->ExtractEntry<D2Class_015A8080>(entry);
 	if (!buffer) return;
 
 	auto icon_container_array = buffer->icon_ref_container.get();
 
-	indexed_icons.clear();
 	indexed_icons.resize(icon_container_array.size());
 
 	for (int i = 0; i < icon_container_array.size(); i++)
@@ -189,55 +218,16 @@ void Package::InvestmentModule::SetupIndexedIcons(const Entry& entry)
 
 void Package::InvestmentModule::SetupIndexedItems(const Entry& entry)
 {
-	static std::unordered_map<uint32_t, FileReference<D2Class_9F548080>> cur_items;
-	static std::unordered_map<uint32_t, FileReference<D2Class_9F548080>> prev_items;
-
-	auto buffer = pkg->ExtractEntry<D2Class_99548080>(entry, true);
+	auto buffer = pkg->ExtractEntry<D2Class_99548080>(entry);
 	if (!buffer) return;
 
 	auto item_array = buffer->items.get();
+	if (indexed_items.empty())
+		for (const auto& item : item_array)
+			indexed_items[item->api_hash] = item->item_string_data;
 
-	prev_items = cur_items;
-	cur_items.clear();
-
-	for (const auto& item : item_array)
-		cur_items.insert({ item->api_hash, item->item_string_data });
-
-	if (cur_items.size() == prev_items.size()) return;
-
-	indexed_items.clear();
-
-	for (const auto& [hash, ref] : cur_items)
-		if (prev_items.find(hash) == prev_items.end())
-			indexed_items.insert({ hash, ref });
+	if (indexed_items.size() != item_array.size())
+		for (const auto& item : item_array)
+			if (indexed_items.find(item->api_hash) != indexed_items.end())
+				indexed_items.erase(item->api_hash);
 }
-
-std::wstring D2_StrIndexRef::get_string()
-{
-	if (hash == 0x811c9dc5) return L"";
-
-	auto container_ref = Package::InvestmentModule::GetStringContainerByIndex(container_index);
-	if (!container_ref)
-		return L"";
-
-	auto container_buffer = container_ref->get_data();
-	if (!container_buffer)
-		return L"";
-
-	auto string_container = container_buffer->string_container[12].get_data();
-	if (!string_container)
-		return L"";
-
-	auto string_parts = string_container->string_parts.get();
-	auto string_hashes = container_buffer->string_hashes.get();
-
-	for (int i = 0; i < string_hashes.size(); i++)
-	{
-		if (string_hashes[i]->string_hash == hash)
-		{
-			return string_parts[i]->get_string();
-		}
-	}
-
-	return L"";
-};

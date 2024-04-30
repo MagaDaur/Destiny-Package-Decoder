@@ -42,7 +42,7 @@ public:
 		return temp;
 	};
 
-	bool ExportBinary(const std::string& output_folder_path) const
+	bool ExportBinary(const std::wstring& output_folder_path) const
 	{
 		Package* pkg = get_package();
 		if (!pkg) return false;

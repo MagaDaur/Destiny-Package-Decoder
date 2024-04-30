@@ -23,6 +23,8 @@
 #define SETUP_ACTIVITY		(1 << 8)
 #define SETUP_ALL			0xFFFFFFFF
 
+extern const std::wstring root_folder_path;
+
 using hash_time_pair = std::pair<uint64_t, time_t>;
 
 class Package;
@@ -111,7 +113,7 @@ public:
 		bool Export(const Entry&, const std::wstring&, bool force = false);
 		void SetupStringHashes(const Entry&);
 	public:
-		static inline std::unordered_map<uint32_t, std::wstring> string_hmap;
+		static inline std::unordered_map<uint32_t, std::vector<std::wstring>> string_hmap;
 	};
 
 	class BinaryModule : PackageModule

@@ -57,17 +57,20 @@ bool Package::TextModule::Export(const Entry& entry, const std::wstring& output_
 
 void Package::TextModule::SetupStringHashes(const Entry& entry)
 {
-	return; // Unused for now
-
-	auto string_container_info = pkg->ExtractEntry<D2Class_EF998080>(entry, true);
+	auto string_container_info = pkg->ExtractEntry<D2Class_EF998080>(entry);
 	if (!string_container_info) return;
 
 	auto string_container = string_container_info->string_container[12].get_data();
 	if (!string_container) return;
 
 	auto string_container_entry = string_container_info->string_container[12].get_entry();
-	if (string_container_entry->class_type != 0x808099F1 || string_container_entry->file_size < string_container->filesize) return;
+	if (string_container_entry->class_type != 0x808099F1 || string_container_entry->file_size < string_container->filesize)
+		return;
 
+	auto strings = string_container->strings.get();
 	auto string_hashes = string_container_info->string_hashes.get();
 	auto string_parts = string_container->string_parts.get();
+
+	for (int i = 0; i < std::min(string_hashes.size(), string_parts.size()); i++)
+		string_hmap[string_hashes[i]->string_hash].push_back(string_parts[i]->get_string());
 }

@@ -4,10 +4,6 @@
 #include "filereference.h"
 #include "d2class.h"
 
-#include "activity_structs.h"
-
-std::vector<std::pair<Package*, Entry>> get_valid_icons(uint16_t icon_index);
-
 struct D2Class_0E5A8080
 {
 	uint32_t unk1;

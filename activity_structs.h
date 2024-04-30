@@ -4,6 +4,15 @@
 #include "d2class.h"
 #include "filereference.h"
 
+#include "text_structs.h"
+
+#include <unordered_map>
+
+namespace
+{
+	typedef std::unordered_map<std::string, std::wstring> strmap;
+}
+
 struct StringHash
 {
 	uint32_t hash;
@@ -30,7 +39,7 @@ struct D2Class_8B8E8080
 	StringHash location_name;
 	uint8_t pad1[0xC];
 
-	uint64_t unk_hash64;
+	FileReference64<D2Class_EF998080> string_container;
 
 	uint8_t pad2[0x28];
 
@@ -58,6 +67,16 @@ struct D2Class_24898080
 
 	D2_Array<D2_TempDummyStruct> unk3;
 	D2_Array<D2_TempDummyStruct> unk4;
+
+	strmap get_strings()
+	{
+		return 
+		{
+			{ "location", location_name.get_string() },
+			{ "activity", activity_name.get_string() },
+			{ "bubble",   bubble_name.get_string() },
+		};
+	}
 };
 
 struct D2Class_00978080
@@ -137,7 +156,7 @@ struct D2Class_8E8E8080
 
 	uint8_t pad0[0x8];
 
-	FileReference64<D2Class_8B8E8080> string_container;
+	FileReference64<D2Class_8B8E8080> string_data;
 
 	D2_Array<D2Class_00978080> unk_array1;
 
@@ -154,6 +173,17 @@ struct D2Class_8E8E8080
 	uint8_t pad2[0x8];
 
 	FileReference64<void> child_activity_data;
+
+	std::vector<strmap> get_map_data()
+	{
+		auto map_data_array = map_data.get();
+		std::vector<strmap> ret(map_data_array.size());
+		
+		for (const auto& map : map_data_array)
+			ret.push_back(map->get_strings());
+
+		return ret;
+	}
 };
 
 #endif

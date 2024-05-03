@@ -9,8 +9,6 @@
 
 #undef min
 
-std::vector<std::pair<Package*, Entry>> get_valid_icons(uint16_t icon_index);
-
 bool Package::InvestmentModule::Export(const Entry& entry, const std::wstring& output_folder_path, bool force)
 {
 	const static std::wregex reg(L"[\\/:*?\"<>|\n]");
@@ -42,13 +40,7 @@ bool Package::InvestmentModule::Export(const Entry& entry, const std::wstring& o
 
 	CreateDirectoryW(item_folder_path.c_str(), NULL);
 
-	auto primary_icons = get_valid_icons(display_data_buffer->icon_index);
-	auto secondary_icons = get_valid_icons(display_data_buffer->secondary_icon_index);
-
-	for (auto& [pkg, entry] : primary_icons)
-		pkg->mTexture.Export(entry, item_folder_path, true);
-
-	for (auto& [pkg, entry] : secondary_icons)
+	for (auto& [pkg, entry] : display_data_buffer->get_icons())
 		pkg->mTexture.Export(entry, item_folder_path, true);
 
 	auto file_path = item_folder_path + L"info.txt";
@@ -181,6 +173,16 @@ std::vector<std::pair<Package*, Entry>> get_valid_icons(uint16_t icon_index)
 	}
 
 	return icons;
+}
+
+std::vector<std::pair<Package*, Entry>> D2Class_9F548080::get_icons()
+{
+	auto primary = get_valid_icons(icon_index);
+	auto secondary = get_valid_icons(secondary_icon_index);
+
+	primary.insert(primary.end(), std::make_move_iterator(secondary.begin()), std::make_move_iterator(secondary.end()));
+
+	return primary;
 }
 
 void Package::InvestmentModule::SetupIndexedStrings(const Entry& entry)

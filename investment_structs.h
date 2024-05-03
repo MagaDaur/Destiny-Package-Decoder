@@ -79,6 +79,8 @@ struct D2Class_9F548080
 	D2_Array<void> unk_array0;
 
 	uint32_t unk_hashes[6];
+
+	std::vector<std::pair<Package*, Entry>> get_icons();
 };
 
 struct D2Class_D53E8080

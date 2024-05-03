@@ -40,7 +40,6 @@ bool Package::ExportAll(const std::wstring& folder_path, int flags)
 		if ((flags & SETUP_ACTIVITY) && entry.class_type == 0x80808E8E)
 		{
 			mActivity.Export(entry, activity_folder_path);
-			//mBinary.Export(entry, activity_folder_path);
 		}
 
 		if ((flags & SETUP_AUDIO) && entry.type == 26 && entry.subtype == 7)

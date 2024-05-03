@@ -71,6 +71,9 @@ void Package::TextModule::SetupStringHashes(const Entry& entry)
 	auto string_hashes = string_container_info->string_hashes.get();
 	auto string_parts = string_container->string_parts.get();
 
+
 	for (int i = 0; i < std::min(string_hashes.size(), string_parts.size()); i++)
-		string_hmap[string_hashes[i]->string_hash].push_back(string_parts[i]->get_string());
+		//pohui
+		if (string_hmap[string_hashes[i]->string_hash].end() == std::find(string_hmap[string_hashes[i]->string_hash].begin(), string_hmap[string_hashes[i]->string_hash].end(), string_parts[i]->get_string()))
+			string_hmap[string_hashes[i]->string_hash].push_back(string_parts[i]->get_string());
 }

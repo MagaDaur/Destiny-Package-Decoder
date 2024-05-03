@@ -14,7 +14,7 @@ const std::wstring root_folder_path = L"D:/PackageDecoder/";
 
 int main()
 {
-	_setmode(_fileno(stdout), _O_U16TEXT);
+	auto warning = _setmode(_fileno(stdout), _O_U16TEXT);
 
 	g_pOodle = new Oodle();
 

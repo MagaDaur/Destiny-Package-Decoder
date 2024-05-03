@@ -44,7 +44,7 @@ struct D2Class_F5998080
 	{
 		std::wstring ret;
 		auto base = string_part.get();
-		if (!base) return L"";
+		if (!base) return L"unknown";
 
 		for (int i = 0; i < part_count; i++)
 		{

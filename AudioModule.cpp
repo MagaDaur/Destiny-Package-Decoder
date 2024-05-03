@@ -1,10 +1,9 @@
 #include "package.h"
+#include "audio_structs.h"
 #include <Windows.h>
 
 bool Package::AudioModule::Export(const Entry& entry, const std::wstring& output_folder_path, bool force)
 {
-	if (pkg->package_path.find(L"_ru_") == std::string::npos) return false;
-
 	auto buffer = pkg->ExtractEntry(entry, force);
 	if (!buffer) return false;
 
@@ -26,4 +25,39 @@ bool Package::AudioModule::Export(const Entry& entry, const std::wstring& output
 	DeleteFileW(wem_file_path.c_str());
 
 	return true;
+}
+
+bool D2Class_38978080::ExportWems(const std::wstring& output_folder_path)
+{
+	int counter = 0;
+	for (const auto& wem : wems.get())
+	{
+		auto wem_entry = wem->wem_file.get_entry();
+		auto wem_pkg = wem->wem_file.get_package();
+		if (!wem_pkg || !wem_entry) continue;
+
+		wem_pkg->mAudio.Export(*wem_entry, output_folder_path, true);
+		counter++;
+	}
+
+	return true;
+}
+
+std::wstring StringHashRefExt::get_string()
+{
+	auto string_container = ref.get_data();
+	if (!string_container) return L"unknown";
+
+	auto string_conatiner_buffer = string_container->string_container[12].get_data();
+	if (!string_conatiner_buffer) return L"unknown";
+
+	auto string_hashes = string_container->string_hashes.get();
+	auto string_buffer = string_conatiner_buffer->string_parts.get();
+
+	for (int i = 0; i < string_hashes.size(); i++)
+		if (string_hashes[i]->string_hash == string_hash)
+			return string_buffer[i]->get_string();
+
+	return L"unknown";
+
 }

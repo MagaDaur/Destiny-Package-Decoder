@@ -53,6 +53,8 @@ public:
 	uint32_t tag;
 };
 
+#include <optional>
+
 template<class T>
 class FileReference64
 {
@@ -60,19 +62,44 @@ public:
 	FileReference64() : tag64(0) {};
 	FileReference64(uint64_t tag64) : tag64(tag64) {};
 
-	const FileReference<T> GetTag32() const
+	bool valid() const { return tag64 && long(tag64) != -1; };
+
+	const std::optional<FileReference<T>> GetTag32() const
 	{
 		const HashContainer* container = Package::GetHashContainer(tag64);
+		if (!container) return std::nullopt;
 
 		return FileReference<T>(container->tag32);
 	};
 
 	const uint64_t GetTag() const { return tag64; };
 
-	un_block_ptr<T> get_data()
+	un_block_ptr<T> get_data() const
 	{
-		if (!tag64 || tag64 == -1) return nullptr;
-		return GetTag32().get_data();
+		auto tag32 = GetTag32();
+		if (!tag32) return nullptr;
+		return tag32->get_data();
+	}
+
+	Entry* get_entry() const
+	{
+		auto tag32 = GetTag32();
+		if (!tag32) return nullptr;
+		return tag32->get_entry();
+	};
+
+	Package* get_package() const
+	{
+		auto tag32 = GetTag32();
+		if (!tag32) return nullptr;
+		return tag32->get_package();
+	};
+
+	bool ExportBinary(const std::wstring& output_folder_path) const
+	{
+		auto tag32 = GetTag32();
+		if (!tag32) return nullptr;
+		return tag32->ExportBinary(output_folder_path);
 	}
 
 	uint64_t tag64;

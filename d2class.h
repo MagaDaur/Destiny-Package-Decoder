@@ -37,11 +37,12 @@ struct D2_RelativeOffset
 		if (!offset) return nullptr;
 		return (T*)(uint64_t(this) + offset);
 	};
-};
 
-struct D2_TempDummyStruct
-{
-
+	uint32_t get_struct_tag()
+	{
+		if (!offset) return 0;
+		return *(uint32_t*)(uint64_t(this) + offset - 0x4);
+	}
 };
 
 #endif

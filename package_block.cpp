@@ -39,8 +39,8 @@ bool Block::Decrypt(unsigned char* block_buffer, unsigned char* decrypt_buffer, 
 	BCRYPT_KEY_HANDLE hAesKey;
 
 	status = BCryptImportKey(hAesAlg, nullptr, BCRYPT_KEY_DATA_BLOB, &hAesKey, nullptr, 0, keyData, sizeof(keyData), 0);
-	if (status < 0)
-		return false;
+	if (status < 0) return false;
+	
 	ULONG decryptionResult;
 	BCRYPT_AUTHENTICATED_CIPHER_MODE_INFO cipherModeInfo;
 

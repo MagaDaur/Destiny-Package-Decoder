@@ -193,13 +193,13 @@ struct D2Class_28898080
 struct D2Class_B7978080
 {
 	char pad0[0x8];
-	FileReference64<struct D2Class_B8978080> dialogue_table;
+	FileReference64<struct D2Class_B8978080> dialogue_ref;
 };
 
 struct D2Class_6A988080
 {
 	D2_Array<D2Class_28898080> directive_table_array;
-	D2_Array<D2Class_B7978080> dialogue_ref_table;
+	D2_Array<D2Class_B7978080> dialogue_array;
 
 	StringHash bubble_name;
 

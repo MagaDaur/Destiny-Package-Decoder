@@ -5,6 +5,32 @@
 #include "filereference.h"
 #include "activity_structs.h"
 
+struct WAVHeader
+{
+	uint32_t RIFF{};
+	uint32_t ChunkSize{};
+	uint32_t WAVE{};
+	uint32_t fmt{};
+
+	uint32_t Subchunk1Size{};
+	uint16_t AudioFormat{};
+	uint16_t NumChannel{};
+
+	uint32_t SampleRate{};
+	uint32_t ByteRate{};
+
+	uint16_t BlockAlign{};
+	uint16_t BitsPerSample{};
+
+	uint32_t data{};
+
+	uint32_t SubChunk2Size{};
+
+	WAVHeader(const std::wstring&);
+};
+
+bool ConcatWavs(const std::wstring&, const std::vector<std::wstring>&, const std::wstring&);
+
 struct D2Class_14008080
 {
 	FileReference<void> wem_file;
@@ -25,7 +51,7 @@ struct D2Class_38978080
 
 	FileReference<void> unk_file2;
 
-	bool ExportWems(const std::wstring&);
+	std::vector<std::wstring> ExportWavs(const std::wstring&);
 };
 
 struct StringHashRefExt
@@ -57,12 +83,12 @@ struct D2Class_30978080
 {
 	char pad0[0x20];
 
-	D2_RelativeOffset<D2Class_33978080> unk_offset;
+	D2_RelativeOffset<D2Class_33978080> phrase_ptr;
 
 	D2Class_33978080* get_data()
 	{
-		if (unk_offset.get_struct_tag() != 0x80809733) return nullptr;
-		return unk_offset.get();
+		if (phrase_ptr.get_struct_tag() != 0x80809733) return nullptr;
+		return phrase_ptr.get();
 	}
 };
 
@@ -70,7 +96,7 @@ struct D2Class_2D978080
 {
 	char pad0[0x28];
 
-	D2_Array<D2Class_30978080> unk_array0;
+	D2_Array<D2Class_30978080> phrase_array;
 };
 
 struct D2Class_29978080
@@ -78,12 +104,12 @@ struct D2Class_29978080
 	uint32_t unk_hash;
 	char pad0[0x4];
 
-	D2_RelativeOffset<D2Class_2D978080> unk_offset;
+	D2_RelativeOffset<D2Class_2D978080> sentance_ptr;
 
 	D2Class_2D978080* get_data()
 	{
-		if (unk_offset.get_struct_tag() != 0x8080972D) return nullptr;
-		return unk_offset.get();
+		if (sentance_ptr.get_struct_tag() != 0x8080972D) return nullptr;
+		return sentance_ptr.get();
 	}
 };
 
@@ -98,7 +124,7 @@ struct D2Class_B8978080
 	uint64_t filesize;
 
 	D2_Array<D2Class_28978080> unk_array0;
-	D2_Array<D2Class_29978080> unk_array1;
+	D2_Array<D2Class_29978080> sentance_array;
 };
 
 struct D2Class_FB458080

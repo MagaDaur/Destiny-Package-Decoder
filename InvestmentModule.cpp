@@ -31,12 +31,11 @@ bool Package::InvestmentModule::Export(const Entry& entry, const std::wstring& o
 
 	auto item_folder_path = output_folder_path + entry.GenerateName() + L"/";
 	if (item_name.size())
-		item_folder_path = output_folder_path
-		+ L"[ " + std::regex_replace(item_type, reg, L"-") + L" ] "
+		item_folder_path = output_folder_path + L"[ "
+		+ std::regex_replace(item_type, reg, L"-") + L" ] "
 		+ std::regex_replace(item_name, reg, L"-") + L" "
 		+ std::to_wstring(buffer->api_hash) + L" "
-		+ std::to_wstring(entry.entry_id)
-		+ L"/";
+		+ std::to_wstring(entry.entry_id) + L"/";
 
 	CreateDirectoryW(item_folder_path.c_str(), NULL);
 

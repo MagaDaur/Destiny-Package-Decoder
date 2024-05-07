@@ -269,7 +269,7 @@ struct D2Class_8E8E8080
 		return audio_data.get();
 	}
 
-	bool export_dialogues(const std::wstring&);
+	bool ExportDialogues(const std::wstring&);
 
 	std::vector<std::wstring> get_activities();
 	std::wstring get_activity_dev_name();

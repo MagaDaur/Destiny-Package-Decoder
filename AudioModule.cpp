@@ -136,3 +136,18 @@ bool ConcatWavs(const std::wstring& folder_path, const std::vector<std::wstring>
 
 	return true;
 }
+
+std::vector<D2Class_33978080*> D2Class_30978080::get_data()
+{
+	auto struct_tag = phrase_ptr.get_struct_tag();
+	if (struct_tag == 0x80809733)
+	{
+		return { (D2Class_33978080*)phrase_ptr.get() };
+	}
+	else if (struct_tag == 0x8080972A)
+	{
+		auto ptr = (D2Class_2A978080*)phrase_ptr.get();
+		return ptr->get_data();
+	}
+	return {};
+}

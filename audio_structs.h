@@ -83,13 +83,9 @@ struct D2Class_30978080
 {
 	char pad0[0x20];
 
-	D2_RelativeOffset<D2Class_33978080> phrase_ptr;
+	D2_RelativeOffset<void> phrase_ptr;
 
-	D2Class_33978080* get_data()
-	{
-		if (phrase_ptr.get_struct_tag() != 0x80809733) return nullptr;
-		return phrase_ptr.get();
-	}
+	std::vector<D2Class_33978080*> get_data();
 };
 
 struct D2Class_2D978080
@@ -99,17 +95,85 @@ struct D2Class_2D978080
 	D2_Array<D2Class_30978080> phrase_array;
 };
 
+struct D2Class_2F978080
+{
+	char pad0[0x40];
+
+	D2_RelativeOffset<void> sentance_ptr;
+};
+
+struct D2Class_2A978080
+{
+	char pad0[0x30];
+
+	D2_Array<D2Class_2F978080> unk_array;
+
+	std::vector<D2Class_33978080*> get_data()
+	{
+		std::vector<D2Class_33978080*> ret{};
+
+		auto arr = unk_array.get();
+		for (const auto& elem : arr)
+		{
+			auto struct_tag = elem->sentance_ptr.get_struct_tag();
+			if (struct_tag == 0x8080972D)
+			{
+				auto temp = (D2Class_2D978080*)elem->sentance_ptr.get();
+				for (const auto& elem2 : temp->phrase_array.get())
+				{
+					auto vec = elem2->get_data();
+
+					ret.insert(ret.end(), vec.begin(), vec.end());
+				}
+			}
+			else if (struct_tag == 0x8080972A)
+			{
+				auto vec_ptr = (D2Class_2A978080*)elem->sentance_ptr.get();
+				auto vec = vec_ptr->get_data();
+
+				ret.insert(ret.end(), vec.begin(), vec.end());
+			}
+			else if (struct_tag == 0x80809733)
+			{
+				ret.push_back((D2Class_33978080*)elem->sentance_ptr.get());
+			}
+		}
+
+		return ret;
+	}
+};
+
 struct D2Class_29978080
 {
 	uint32_t unk_hash;
 	char pad0[0x4];
 
-	D2_RelativeOffset<D2Class_2D978080> sentance_ptr;
+	D2_RelativeOffset<void> sentance_ptr;
 
-	D2Class_2D978080* get_data()
+	std::vector<D2Class_33978080*> get_phrase_array()
 	{
-		if (sentance_ptr.get_struct_tag() != 0x8080972D) return nullptr;
-		return sentance_ptr.get();
+		std::vector<D2Class_33978080*> ret;
+		auto struct_tag = sentance_ptr.get_struct_tag();
+
+		if (struct_tag == 0x8080972D)
+		{
+			auto temp = (D2Class_2D978080*)sentance_ptr.get();
+			for (const auto& elem : temp->phrase_array.get())
+			{
+				auto vec = elem->get_data();
+
+				ret.insert(ret.end(), vec.begin(), vec.end());
+			}
+			return ret;
+		}
+		else if (struct_tag == 0x8080972A)
+		{
+			auto sentance_array_ptr = (D2Class_2A978080*)sentance_ptr.get();
+
+			return sentance_array_ptr->get_data();
+		}
+
+		return {};
 	}
 };
 

@@ -98,7 +98,7 @@ public:
 	bool ExportBinary(const std::wstring& output_folder_path) const
 	{
 		auto tag32 = GetTag32();
-		if (!tag32) return nullptr;
+		if (!tag32) return false;
 		return tag32->ExportBinary(output_folder_path);
 	}
 

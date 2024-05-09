@@ -37,6 +37,10 @@ bool Package::ExportAll(const std::wstring& folder_path, int flags)
 	{
 		const auto& entry = *it;
 
+		mBinary.Export(entry, unknown_folder_path);
+
+		continue;
+
 		if ((flags & SETUP_ACTIVITY) && entry.class_type == 0x80808E8E)
 		{
 			mActivity.Export(entry, activity_folder_path);

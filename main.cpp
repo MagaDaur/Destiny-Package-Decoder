@@ -26,7 +26,7 @@ int main()
 	{
 		const std::wstring package_path = p.path().wstring();
 
-		if (package_path.find(L"_redacted_") != std::string::npos) continue;
+		//if (package_path.find(L"_redacted_") != std::string::npos) continue;
 		if (package_path.find(L"_gear_") != std::string::npos) continue;
 		if (package_path.find(L"_sandbox_") != std::string::npos) continue;
 
@@ -43,9 +43,9 @@ int main()
 	// must do this in a new loop! after sort!!!!
 	for (auto& [hash, date] : v_packages)
 	{
-		auto pkg = Package::GetPackage(hash);
+		//auto pkg = Package::GetPackage(hash);
 
-		pkg->SetupGlobals();
+		//pkg->SetupGlobals();
 	}
 
 	for(const auto& [hash, date] : v_packages)
@@ -54,6 +54,7 @@ int main()
 		auto* date_info = std::localtime(&date);
 
 		auto package_path = pkg->GetFilePath();
+		if (package_path.find(L"w64_sr_s23_sc_redacted_0424_2.pkg") == std::wstring::npos) continue;
 
 		auto package_name_begin = package_path.find_last_of('/') + 1;
 		auto package_name_end = package_path.find_last_of('.');
@@ -64,7 +65,7 @@ int main()
 
 		CreateDirectoryW(folder_path.c_str(), NULL);
 
-		if (!pkg->ExportAll( folder_path, SETUP_ACTIVITY ))
+		if (!pkg->ExportAll( folder_path, NULL ))
 			fs::remove_all(folder_path);
 	}
 

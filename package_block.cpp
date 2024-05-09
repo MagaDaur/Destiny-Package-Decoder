@@ -13,6 +13,11 @@ const unsigned char AES_KEY_1[16] =
 	0x3A, 0x4A, 0x5D, 0x36, 0x73, 0xA6, 0x60, 0x58, 0x7E, 0x63, 0xE6, 0x76, 0xE4, 0x08, 0x92, 0xB5,
 };
 
+const unsigned char AES_KEY_2[16] =
+{
+	0xA4, 0xDD, 0x6C, 0x58, 0x9D, 0x68, 0xA7, 0x56, 0xFE, 0x72, 0x3A, 0x31, 0x07, 0x93, 0x8B, 0xD1,
+};
+
 bool Block::Decomp(unsigned char* decrypt_buffer, unsigned char* decomp_buffer) const
 {
 	return g_pOodle->Decompress(this, decrypt_buffer, decomp_buffer);
@@ -35,7 +40,14 @@ bool Block::Decrypt(unsigned char* block_buffer, unsigned char* decrypt_buffer, 
 	pHeader->dwMagic = BCRYPT_KEY_DATA_BLOB_MAGIC;
 	pHeader->dwVersion = BCRYPT_KEY_DATA_BLOB_VERSION1;
 	pHeader->cbKeyData = 16;
-	memcpy(pHeader + 1, flags & 0x4 ? AES_KEY_1 : AES_KEY_0, 16);
+
+	if(flags & 0x4)
+		memcpy(pHeader + 1, AES_KEY_1, 16);
+	else if(flags & 0x8)
+		memcpy(pHeader + 1, AES_KEY_2, 16);
+	else
+		memcpy(pHeader + 1, AES_KEY_0, 16);
+	
 	BCRYPT_KEY_HANDLE hAesKey;
 
 	status = BCryptImportKey(hAesAlg, nullptr, BCRYPT_KEY_DATA_BLOB, &hAesKey, nullptr, 0, keyData, sizeof(keyData), 0);
